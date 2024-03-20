@@ -1,15 +1,55 @@
 import React from 'react';
-import {SafeAreaView, StyleSheet} from 'react-native';
-import {Button} from 'react-native-paper';
+import {Appearance, useColorScheme, View} from 'react-native';
+import {Drawer as PaperDrawer, IconButton, useTheme} from 'react-native-paper';
+import {Drawer} from 'react-native-drawer-layout';
+import Main from './src/Main.tsx';
 
 function App(): React.JSX.Element {
+  const isDarkMode = useColorScheme() === 'dark';
+  const theme = useTheme();
+  const [active, setActive] = React.useState('');
+  const [open, setOpen] = React.useState(false);
+
   return (
-    <SafeAreaView>
-      <Button onPress={() => console.log('dsds')}>Press me</Button>
-    </SafeAreaView>
+    <Drawer
+      open={open}
+      drawerStyle={{backgroundColor: theme.colors.background}}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
+      drawerPosition={'right'}
+      renderDrawerContent={() => {
+        return (
+          <View>
+            <IconButton
+              style={{
+                alignSelf: 'flex-end',
+              }}
+              icon={isDarkMode ? 'white-balance-sunny' : 'moon-waxing-crescent'}
+              size={25}
+              onPress={() => {
+                if (isDarkMode) {
+                  Appearance.setColorScheme('light');
+                } else {
+                  Appearance.setColorScheme('dark');
+                }
+              }}
+            />
+            <PaperDrawer.Item
+              label="First Item"
+              active={active === 'first'}
+              onPress={() => setActive('first')}
+            />
+            <PaperDrawer.Item
+              label="Second Item"
+              active={active === 'second'}
+              onPress={() => setActive('second')}
+            />
+          </View>
+        );
+      }}>
+      <Main setOpen={(prevOpen: boolean) => setOpen(prevOpen)} />
+    </Drawer>
   );
 }
-
-const styles = StyleSheet.create({});
 
 export default App;
