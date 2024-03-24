@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
+import {useNavigation} from '@react-navigation/native';
 
 const data = [
   {id: 1, title: 'A', content: 'Random content'},
@@ -66,10 +67,11 @@ const RenderListItem = ({
   onLongPress: (id: number) => void;
   onPress: (id: number) => void;
 }) => {
+  const theme = useTheme();
+
   if (item.empty) {
     return <View style={[styles.item, styles.itemInvisible]} />;
   }
-  const theme = useTheme();
 
   return (
     <Card
@@ -95,9 +97,9 @@ const RenderListItem = ({
 
 const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
   const theme = useTheme();
-  const [selectedIds, setSelectedIds] = useState([]);
-
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const navigation = useNavigation();
 
   return (
     <SafeAreaView
@@ -136,11 +138,15 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
                     onLongPress={(id: number) =>
                       setSelectedIds(prev => [...prev, id])
                     }
-                    onPress={(id: number) =>
-                      setSelectedIds(prev =>
-                        prev.filter(prevId => prevId !== id),
-                      )
-                    }
+                    onPress={(id: number) => {
+                      if (selectedIds.includes(id)) {
+                        setSelectedIds(prev =>
+                          prev.filter(prevId => prevId !== id),
+                        );
+                      } else {
+                        navigation.navigate('NoteEdit');
+                      }
+                    }}
                   />
                 );
               }
@@ -157,11 +163,15 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
                     onLongPress={(id: number) =>
                       setSelectedIds(prev => [...prev, id])
                     }
-                    onPress={(id: number) =>
-                      setSelectedIds(prev =>
-                        prev.filter(prevId => prevId !== id),
-                      )
-                    }
+                    onPress={(id: number) => {
+                      if (selectedIds.includes(id)) {
+                        setSelectedIds(prev =>
+                          prev.filter(prevId => prevId !== id),
+                        );
+                      } else {
+                        navigation.navigate('NoteEdit');
+                      }
+                    }}
                   />
                 );
               }

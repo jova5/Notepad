@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+    }
+    html {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      background: transparent;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .container {
+      /*width: 100%;*/
+      background:transparent;
+      overflow: hidden;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+    }
+    #content {
+      background-color: transparent;
+      display: flex;
+      flex: 1;
+      flex-flow: column;
+      padding: 16px;
+      outline: none;
+      overflow: hidden;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    #content::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+  <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
+  <title>TextEditor</title>
+</head>
+<body>
+
+<div class="container">
+<!--  <div class="toolbar">-->
+<!--    <div class="btn-toolbar">-->
+<!--      <button onclick="formatDoc('undo')"><i class='bx bx-undo'></i></button>-->
+<!--      <button onclick="formatDoc('redo')"><i class='bx bx-redo'></i></button>-->
+<!--      <button onclick="formatDoc('bold')"><i class='bx bx-bold'></i></button>-->
+<!--      <button onclick="formatDoc('underline')"><i class='bx bx-underline'></i></button>-->
+<!--      <button onclick="formatDoc('italic')"><i class='bx bx-italic'></i></button>-->
+<!--      <button onclick="formatDoc('strikeThrough')"><i class='bx bx-strikethrough'></i></button>-->
+<!--      <button onclick="addLink()"><i class='bx bx-link'></i></button>-->
+<!--      <button onclick="formatDoc('unlink')"><i class='bx bx-unlink'></i></button>-->
+<!--    </div>-->
+<!--  </div>-->
+  <div id="content" contenteditable="true" spellcheck="true">
+  </div>
+</div>
+
+<script>
+  function formatDoc(cmd, value = null) {
+    if (value) {
+      document.execCommand(cmd, false, value);
+    } else {
+      document.execCommand(cmd);
+    }
+  }
+
+  function addLink() {
+    const url = prompt('Insert url');
+    formatDoc('createLink', url);
+  }
+
+  const content = document.getElementById('content');
+
+  content.addEventListener('mouseenter', function () {
+    const a = content.querySelectorAll('a');
+    a.forEach(item => {
+      item.addEventListener('mouseenter', function () {
+        content.setAttribute('contenteditable', false);
+        item.target = '_blank';
+      });
+      item.addEventListener('mouseleave', function () {
+        content.setAttribute('contenteditable', true);
+      });
+    });
+  });
+
+  function startsWithNumberedListItem(str) {
+    const regex = /\s*\d+\.|\s*\d+\)/;
+    return regex.test(str);
+  }
+
+  function incrementListItemNumber(str) {
+    const regex = /^(\d+)([.)])\s/;
+    const match = str.match(regex);
+    if (match) {
+      const number = parseInt(match[1], 10);
+      const punctuation = match[2];
+      const newNumber = number + 1;
+      return `${newNumber}${punctuation}&nbsp;`;
+    }
+    return str;
+  }
+
+  function hasContent(str) {
+    const splitStr = str.split(' ');
+    return splitStr.length > 1;
+  }
+
+  function isLastElementInsideDiv(contentElement) {
+    let lastNode = contentElement.lastChild;
+    return lastNode && lastNode.nodeName.toLowerCase() === 'div';
+  }
+
+  content.addEventListener('keypress', function (event) {
+    if (event.key === 'Enter') {
+      let textInLines = content.innerText.split('\n');
+      let lastInput = textInLines[textInLines.length - 1];
+      if (startsWithNumberedListItem(lastInput)) {
+        if (hasContent(lastInput)) {
+          event.preventDefault();
+          let number = incrementListItemNumber(lastInput);
+          if (isLastElementInsideDiv(content)) {
+            content.innerHTML += number;
+          } else {
+            content.innerHTML += '<br>' + number;
+          }
+          moveCursorToEnd(content);
+          //ensureCursorInView();
+
+        } else {
+          event.preventDefault();
+          content.innerText = removeLastLine(content.innerText);
+          content.innerHTML += '<div><br></div>';
+          moveCursorToEnd(content);
+          //ensureCursorInView();
+
+        }
+      }
+    }
+  });
+
+  function removeLastLine(str) {
+    let lines = str.split('\n');
+    lines.pop();
+    return lines.join('\n');
+  }
+
+  function moveCursorToEnd(el) {
+    if (
+      typeof window.getSelection !== 'undefined' &&
+      typeof document.createRange !== 'undefined'
+    ) {
+      let range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      let sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else if (typeof document.body.createTextRange !== 'undefined') {
+      let textRange = document.body.createTextRange();
+      textRange.moveToElementText(el);
+      textRange.collapse(false);
+      textRange.select();
+    }
+  }
+
+  function ensureCursorInView() {
+    let cursor = window.getSelection().getRangeAt(0).getBoundingClientRect();
+    if (cursor.top < 0 || cursor.bottom > window.innerHeight) {
+      // Scroll the viewport to ensure the cursor is in view
+      window.scrollBy(0, cursor.top - window.innerHeight / 2);
+    }
+  }
+
+</script>
+</body>
+</html>
