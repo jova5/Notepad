@@ -1,11 +1,10 @@
 import WebView from 'react-native-webview';
-import {createRef} from 'react';
+import {forwardRef, Ref} from 'react';
 import {useTheme} from 'react-native-paper';
 
 const myHtmlFile = require('./TextEditor.html');
 
-const Editor = () => {
-  const ref = createRef<WebView>();
+const Editor = forwardRef((props, ref: Ref<WebView>) => {
   const theme = useTheme();
 
   return (
@@ -18,6 +17,6 @@ const Editor = () => {
       }}
     />
   );
-};
+});
 
 export default Editor;

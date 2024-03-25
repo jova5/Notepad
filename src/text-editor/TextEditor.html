@@ -9,6 +9,7 @@
       padding: 0;
       background: transparent;
     }
+
     html {
       display: flex;
       flex: 1;
@@ -16,6 +17,7 @@
       height: 100%;
       margin: 0;
     }
+
     body {
       background: transparent;
       display: flex;
@@ -23,14 +25,15 @@
       flex-direction: column;
       overflow: hidden;
     }
+
     .container {
-      /*width: 100%;*/
-      background:transparent;
+      background: transparent;
       overflow: hidden;
       display: flex;
       flex: 1;
       flex-direction: column;
     }
+
     #content {
       background-color: transparent;
       display: flex;
@@ -42,6 +45,7 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+
     #content::-webkit-scrollbar {
       display: none;
     }
@@ -52,19 +56,7 @@
 <body>
 
 <div class="container">
-<!--  <div class="toolbar">-->
-<!--    <div class="btn-toolbar">-->
-<!--      <button onclick="formatDoc('undo')"><i class='bx bx-undo'></i></button>-->
-<!--      <button onclick="formatDoc('redo')"><i class='bx bx-redo'></i></button>-->
-<!--      <button onclick="formatDoc('bold')"><i class='bx bx-bold'></i></button>-->
-<!--      <button onclick="formatDoc('underline')"><i class='bx bx-underline'></i></button>-->
-<!--      <button onclick="formatDoc('italic')"><i class='bx bx-italic'></i></button>-->
-<!--      <button onclick="formatDoc('strikeThrough')"><i class='bx bx-strikethrough'></i></button>-->
-<!--      <button onclick="addLink()"><i class='bx bx-link'></i></button>-->
-<!--      <button onclick="formatDoc('unlink')"><i class='bx bx-unlink'></i></button>-->
-<!--    </div>-->
-<!--  </div>-->
-  <div id="content" contenteditable="true" spellcheck="true">
+  <div id="content" contenteditable="true" spellcheck="false">
   </div>
 </div>
 
@@ -77,22 +69,17 @@
     }
   }
 
-  function addLink() {
-    const url = prompt('Insert url');
-    formatDoc('createLink', url);
-  }
+  const content = document.getElementById("content");
 
-  const content = document.getElementById('content');
-
-  content.addEventListener('mouseenter', function () {
-    const a = content.querySelectorAll('a');
+  content.addEventListener("mouseenter", function() {
+    const a = content.querySelectorAll("a");
     a.forEach(item => {
-      item.addEventListener('mouseenter', function () {
-        content.setAttribute('contenteditable', false);
-        item.target = '_blank';
+      item.addEventListener("mouseenter", function() {
+        content.setAttribute("contenteditable", false);
+        item.target = "_blank";
       });
-      item.addEventListener('mouseleave', function () {
-        content.setAttribute('contenteditable', true);
+      item.addEventListener("mouseleave", function() {
+        content.setAttribute("contenteditable", true);
       });
     });
   });
@@ -124,10 +111,35 @@
     return lastNode && lastNode.nodeName.toLowerCase() === 'div';
   }
 
-  content.addEventListener('keypress', function (event) {
-    if (event.key === 'Enter') {
-      let textInLines = content.innerText.split('\n');
-      let lastInput = textInLines[textInLines.length - 1];
+  function findDifference(prev, newList) {
+    for (var i = 0; i < newList.length; i++) {
+      if (i > prev.length || prev[i] !== newList[i]) {
+        return newList[i];
+      }
+    }
+
+    return null;
+  }
+
+  // function getPos() {
+  //   var sel = document.getSelection(),
+  //     nd = sel.anchorNode,
+  //     text = nd.textContent.slice(0, sel.focusOffset);
+  //
+  //   console.log(nd.textContent);
+  //   var line=content.innerText.split("\n").length;
+  //   var col=text.split("\n").pop().length;
+  //   console.log("row:"+line+", col:"+col )
+  // }
+
+  let prevList = [];
+
+  content.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+      getPos()
+      let textInLines = content.innerText.split("\n");
+      let lastInput = findDifference(prevList, textInLines);
+      prevList = textInLines;
       if (startsWithNumberedListItem(lastInput)) {
         if (hasContent(lastInput)) {
           event.preventDefault();
@@ -138,14 +150,14 @@
             content.innerHTML += '<br>' + number;
           }
           moveCursorToEnd(content);
-          //ensureCursorInView();
+          ensureCursorInView();
 
         } else {
           event.preventDefault();
           content.innerText = removeLastLine(content.innerText);
           content.innerHTML += '<div><br></div>';
           moveCursorToEnd(content);
-          //ensureCursorInView();
+          ensureCursorInView();
 
         }
       }
@@ -153,15 +165,15 @@
   });
 
   function removeLastLine(str) {
-    let lines = str.split('\n');
+    let lines = str.split("\n");
     lines.pop();
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   function moveCursorToEnd(el) {
     if (
-      typeof window.getSelection !== 'undefined' &&
-      typeof document.createRange !== 'undefined'
+      typeof window.getSelection !== "undefined" &&
+      typeof document.createRange !== "undefined"
     ) {
       let range = document.createRange();
       range.selectNodeContents(el);
@@ -169,7 +181,7 @@
       let sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
-    } else if (typeof document.body.createTextRange !== 'undefined') {
+    } else if (typeof document.body.createTextRange !== "undefined") {
       let textRange = document.body.createTextRange();
       textRange.moveToElementText(el);
       textRange.collapse(false);
@@ -184,6 +196,33 @@
       window.scrollBy(0, cursor.top - window.innerHeight / 2);
     }
   }
+  //
+  // function isLink(str) {
+  //   const regex = /((http|https):\/\/[^\s]+)/g
+  //   return regex.test(str);
+  // }
+  //
+  // content.addEventListener("paste", function(event) {
+  // TODO: populate prevList
+  //   var text = event.clipboardData.getData("text/plain");
+  //   // console.log(text);
+  //   if (isLink(text)) {
+  //     const contentt = content.innerHTML;
+  //     // console.log(content.innerText.length);
+  //     let replacedContent;
+  //     if (content.innerText.length === 0) {
+  //       event.preventDefault();
+  //       replacedContent = `<p><a href="${text}" target="_blank">${text}</a></p>`;
+  //       content.innerHTML += replacedContent;
+  //     } else {
+  //       const regex = /((http|https):\/\/[^\s]+)/g;
+  //       replacedContent = contentt.replace(regex, "<a href=\"$1\" target=\"_blank\">$1</a>");
+  //       // console.log("2 replaced: " + replacedContent);
+  //       content.innerHTML = replacedContent;
+  //     }
+  //   }
+
+  // });
 
 </script>
 </body>

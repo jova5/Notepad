@@ -2,6 +2,8 @@ import {Appbar, IconButton, useTheme} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView, StyleSheet, View} from 'react-native';
 import Editor from './text-editor/Editor.tsx';
+import WebView from 'react-native-webview';
+import {createRef} from 'react';
 
 const NoteEditHeader = () => {
   const navigation = useNavigation();
@@ -22,6 +24,14 @@ const NoteEditHeader = () => {
 
 const NoteEdit = () => {
   const theme = useTheme();
+  const ref = createRef<WebView>();
+
+  const executeFunctionInWebView = (command: string) => {
+    const script = `formatDoc('${command}')`;
+    if (ref.current) {
+      ref.current.injectJavaScript(script);
+    }
+  };
 
   return (
     <>
@@ -32,7 +42,7 @@ const NoteEdit = () => {
           flex: 1,
           flexDirection: 'column',
         }}>
-        <Editor />
+        <Editor ref={ref} />
         <View
           style={{
             display: 'flex',
@@ -44,27 +54,35 @@ const NoteEdit = () => {
             borderTopColor: theme.colors.outline,
             borderTopWidth: 1,
           }}>
-          <IconButton icon={'undo'} mode={'contained'} onPress={() => {}} />
-          <IconButton icon={'redo'} mode={'contained'} onPress={() => {}} />
+          <IconButton
+            icon={'undo'}
+            mode={'contained'}
+            onPress={() => executeFunctionInWebView('undo')}
+          />
+          <IconButton
+            icon={'redo'}
+            mode={'contained'}
+            onPress={() => executeFunctionInWebView('redo')}
+          />
           <IconButton
             icon={'format-bold'}
             mode={'contained'}
-            onPress={() => {}}
+            onPress={() => executeFunctionInWebView('bold')}
           />
           <IconButton
             icon={'format-underline'}
             mode={'contained'}
-            onPress={() => {}}
+            onPress={() => executeFunctionInWebView('underline')}
           />
           <IconButton
             icon={'format-italic'}
             mode={'contained'}
-            onPress={() => {}}
+            onPress={() => executeFunctionInWebView('italic')}
           />
           <IconButton
             icon={'format-strikethrough'}
             mode={'contained'}
-            onPress={() => {}}
+            onPress={() => executeFunctionInWebView('strikeThrough')}
           />
         </View>
       </SafeAreaView>
