@@ -49,6 +49,13 @@
     #content::-webkit-scrollbar {
       display: none;
     }
+
+    #content {
+      white-space: pre-wrap; /* css-3 */
+      white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
+      white-space: -o-pre-wrap; /* Opera 7 */
+      word-wrap: break-word; /* Internet Explorer 5.5+ */
+    }
   </style>
   <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
   <title>TextEditor</title>
@@ -56,8 +63,7 @@
 <body>
 
 <div class="container">
-  <div id="content" contenteditable="true" spellcheck="false">
-  </div>
+  <div id="content" contenteditable="true" spellcheck="false"></div>
 </div>
 
 <script>
@@ -96,19 +102,20 @@
       const number = parseInt(match[1], 10);
       const punctuation = match[2];
       const newNumber = number + 1;
-      return `${newNumber}${punctuation}&nbsp;`;
+      return `${newNumber}${punctuation} `;
     }
     return str;
   }
 
-  function hasContent(str) {
-    const splitStr = str.split(' ');
-    return splitStr.length > 1;
+  function numberingHasContent(str) {
+    const splitStr = str.split(" ");
+    // console.log(splitStr);
+    return splitStr.length > 1 && splitStr[1] !== "";
   }
 
   function isLastElementInsideDiv(contentElement) {
     let lastNode = contentElement.lastChild;
-    return lastNode && lastNode.nodeName.toLowerCase() === 'div';
+    return lastNode && lastNode.nodeName.toLowerCase() === "div";
   }
 
   function findDifference(prev, newList) {
@@ -121,50 +128,294 @@
     return null;
   }
 
-  // function getPos() {
-  //   var sel = document.getSelection(),
-  //     nd = sel.anchorNode,
-  //     text = nd.textContent.slice(0, sel.focusOffset);
-  //
-  //   console.log(nd.textContent);
-  //   var line=content.innerText.split("\n").length;
-  //   var col=text.split("\n").pop().length;
-  //   console.log("row:"+line+", col:"+col )
-  // }
+  function getPos() {
+    var sel = document.getSelection(),
+      nd = sel.anchorNode,
+      text = nd.textContent.slice(0, sel.focusOffset);
 
-  let prevList = [];
+    // console.log(nd.textContent);
+    var line = content.innerText.split("\n").length;
+    var col = text.split("\n").pop().length;
+    // console.log("row:" + line + ", col:" + col);
+  }
+
+  function moveCursorOneSpaceBack() {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const container = range.commonAncestorContainer;
+
+      // Check if the cursor is positioned inside a text node
+      // if (container.nodeType === Node.TEXT_NODE) {
+      const offset = range.startOffset;
+
+      // Move the cursor one space back
+      if (offset > 0) {
+        range.setStart(container, offset - 1);
+        range.collapse(true);
+
+        // Update the selection with the new range
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      // }
+    }
+  }
+
+  function getCaretCharacterOffsetWithin(element) {
+    var caretOffset = 0;
+    var doc = element.ownerDocument || element.document;
+    var win = doc.defaultView || doc.parentWindow;
+    var sel;
+    if (typeof win.getSelection != "undefined") {
+      sel = win.getSelection();
+      if (sel.rangeCount > 0) {
+        var range = win.getSelection().getRangeAt(0);
+        var preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        caretOffset = preCaretRange.toString().length;
+      }
+    } else if ((sel = doc.selection) && sel.type != "Control") {
+      var textRange = sel.createRange();
+      var preCaretTextRange = doc.body.createTextRange();
+      preCaretTextRange.moveToElementText(element);
+      preCaretTextRange.setEndPoint("EndToEnd", textRange);
+      caretOffset = preCaretTextRange.text.length;
+    }
+    return caretOffset;
+  }
+
+  const getContainingElement = () => {
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const container = range.commonAncestorContainer;
+      // console.log(range);
+      // console.log(container.parentNode);
+      // console.log(container.nodeType);
+      //
+
+      // console.log(range.commonAncestorContainer);
+      // Traverse up the DOM tree until we find a suitable container within the editable div
+      let node = container.nodeType === 1 ? container : container.parentNode;
+      // console.log(node.parentNode);
+      // while (node !== null && node.parentNode !== document.getElementById('content')) {
+      //   node = node.parentNode;
+      // }
+
+      return node;
+    }
+    return null;
+  };
+
+  function isEndOfLine(listOfContents, cursorPosition) {
+    let count = 0;
+    for (const element of listOfContents) {
+      count += element.length;
+      if (count === cursorPosition) {
+        return true;
+      } else if (count > cursorPosition) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  function setCursorPosition(position) {
+    // select content editable div element
+
+    // select text from a window
+    var selectedText = window.getSelection();
+
+    // create a range
+    var selectedRange = document.createRange();
+
+    // set starting position of the cursor in the texts
+
+    let count = 0;
+    for (let i = 0; i < content.childNodes.length; i++) {
+      console.log(content.childNodes[i].textContent);
+      if (position <= content.childNodes[i].textContent.length) {
+        selectedRange.setStart(content.childNodes[i], position);
+        break;
+      }
+      if (content.childNodes[i].textContent.length === 0 && position === 1) {
+        selectedRange.setStartAfter(content.childNodes[i]);
+        break;
+      }
+      // if (count === 1 && position === 1) {
+      //   selectedRange.setStart(content.childNodes[i], 0);
+      //   break;
+      // }
+      position = position - content.childNodes[i].textContent.length;
+    }
+
+    // collapse the range at boundaries
+    selectedRange.collapse(true);
+
+    // remove all ranges
+    selectedText.removeAllRanges();
+
+    // add a new range to the selected text
+    selectedText.addRange(selectedRange);
+
+    // focus the cursor
+    content.focus();
+  }
+
+  function getNodes(content, numberLineHasContent, number, lastInput) {
+
+    let nodes = [];
+
+    for (let i = 0; i < content.childNodes.length; i++) {
+      if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
+        nodes.push(content.childNodes[i].textContent);
+        if (content.childNodes.length === 1) {
+          nodes.push(document.createElement("br"));
+          if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+            nodes.push(number);
+            nodes.push(document.createElement("br"));
+          }
+        } else {
+          if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+            nodes.push(document.createElement("br"));
+            nodes.push(number);
+          }
+          if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+            nodes.push(document.createElement("br"));
+          }
+        }
+      } else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
+
+        if (content.childNodes[i].childNodes.length > 1) {
+          nodes = [
+            ...nodes,
+            ...getNodes(content.childNodes[i], numberLineHasContent, number, lastInput),
+          ];
+        } else {
+          if (content.childNodes[i].textContent.length === 0) {
+            nodes.push(document.createElement("br"));
+          } else {
+            nodes.push(content.childNodes[i].textContent);
+            nodes.push(document.createElement("br"));
+            if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+              nodes.push(number);
+              nodes.push(document.createElement("br"));
+            }
+          }
+        }
+
+      }
+    }
+
+    return nodes;
+  }
 
   content.addEventListener("keypress", function(event) {
     if (event.key === "Enter") {
-      getPos()
-      let textInLines = content.innerText.split("\n");
-      let lastInput = findDifference(prevList, textInLines);
-      prevList = textInLines;
+
+      let lastInput = getCurrentLine(content);
       if (startsWithNumberedListItem(lastInput)) {
-        if (hasContent(lastInput)) {
-          event.preventDefault();
-          let number = incrementListItemNumber(lastInput);
-          if (isLastElementInsideDiv(content)) {
-            content.innerHTML += number;
-          } else {
-            content.innerHTML += '<br>' + number;
+
+        const numberLineHasContent = numberingHasContent(lastInput);
+
+        // if (!numberLineHasContent) {
+        //   return;
+        // }
+
+        event.preventDefault();
+        const cursorPosition = getCaretCharacterOffsetWithin(content);
+        let listOfContents = content.innerText.split("\n");
+
+        if (isEndOfLine(listOfContents, cursorPosition)) {
+          let nodes = [];
+          let number = "";
+
+          if (numberLineHasContent) {
+            number = incrementListItemNumber(lastInput);
           }
-          moveCursorToEnd(content);
-          ensureCursorInView();
 
-        } else {
-          event.preventDefault();
-          content.innerText = removeLastLine(content.innerText);
-          content.innerHTML += '<div><br></div>';
-          moveCursorToEnd(content);
-          ensureCursorInView();
+          nodes = getNodes(content, numberLineHasContent, number, lastInput);
 
+          // for (let i = 0; i < content.childNodes.length; i++) {
+          //   if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
+          //     nodes.push(content.childNodes[i].textContent);
+          //     if (content.childNodes.length === 1) {
+          //       nodes.push(document.createElement("br"));
+          //       if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+          //         nodes.push(number);
+          //         nodes.push(document.createElement("br"));
+          //       }
+          //     } else {
+          //       if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+          //         nodes.push(document.createElement("br"));
+          //         nodes.push(number);
+          //       }
+          //       if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+          //         nodes.push(document.createElement("br"));
+          //       }
+          //     }
+          //   } else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
+          //     if (content.childNodes[i].textContent.length === 0) {
+          //       nodes.push(document.createElement("br"));
+          //     } else {
+          //       nodes.push(content.childNodes[i].textContent);
+          //       nodes.push(document.createElement("br"));
+          //       if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+          //         nodes.push(number);
+          //         nodes.push(document.createElement("br"));
+          //       }
+          //     }
+          //   }
+          // }
+
+          content.replaceChildren(...nodes);
+          setCursorPosition(cursorPosition + (number.length === 0 ? 1 : number.length));
         }
       }
+      // else {
+      //   event.preventDefault();
+      //   const cursorPosition = getCaretCharacterOffsetWithin(content);
+      //   let listOfContents = content.innerText.split("\n");
+      //
+      //   let nodes = [];
+      //
+      //   for (let i = 0; i < content.childNodes.length; i++) {
+      //     // console.log(content.childNodes[i]);
+      //     if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
+      //       nodes.push(content.childNodes[i].textContent);
+      //       if (content.childNodes.length === i+1) {
+      //         nodes.push(document.createElement("br"));
+      //         nodes.push(document.createElement("br"));
+      //       }
+      //     } else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
+      //       if (content.childNodes[i].textContent.length === 0) {
+      //         if (content.childNodes.length === i+1) {
+      //           nodes.push(document.createElement("br"));
+      //           nodes.push(document.createElement("br"));
+      //         } else {
+      //           nodes.push(document.createElement("br"));
+      //         }
+      //       } else {
+      //         nodes.push(content.childNodes[i].textContent);
+      //         nodes.push(document.createElement("br"));
+      //       }
+      //     }
+      //   }
+      //
+      //   content.replaceChildren(...nodes);
+      //   if (isEndOfLine(listOfContents, cursorPosition)) {
+      //     // moveCursorToEnd(content)
+      //     setCursorPosition(cursorPosition+1);
+      //   }
+      //
+      // }
     }
   });
 
   function removeLastLine(str) {
+    // console.log(str);
     let lines = str.split("\n");
     lines.pop();
     return lines.join("\n");
@@ -189,13 +440,50 @@
     }
   }
 
-  function ensureCursorInView() {
-    let cursor = window.getSelection().getRangeAt(0).getBoundingClientRect();
-    if (cursor.top < 0 || cursor.bottom > window.innerHeight) {
-      // Scroll the viewport to ensure the cursor is in view
-      window.scrollBy(0, cursor.top - window.innerHeight / 2);
+  function getCurrentLine(contentEditableElement) {
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount === 0) {
+      return null; // No selection or range available
     }
+
+    const range = selection.getRangeAt(0);
+    const startNode = range.startContainer;
+
+    if (startNode.nodeType !== Node.TEXT_NODE) {
+      return null; // Cursor is not positioned within text node
+    }
+
+    const text = startNode.textContent;
+    const startIndex = range.startOffset;
+
+    let lineStartIndex = startIndex;
+    let lineEndIndex = startIndex;
+
+    // Find the start index of the current line
+    while (lineStartIndex > 0 && text[lineStartIndex - 1] !== "\n") {
+      lineStartIndex--;
+    }
+
+    // Find the end index of the current line
+    while (lineEndIndex < text.length && text[lineEndIndex] !== "\n") {
+      lineEndIndex++;
+    }
+
+    // Extract the current line text
+    const currentLine = text.substring(lineStartIndex, lineEndIndex);
+
+    return currentLine;
   }
+
+  //
+  // function ensureCursorInView() {
+  //   let cursor = window.getSelection().getRangeAt(0).getBoundingClientRect();
+  //   if (cursor.top < 0 || cursor.bottom > window.innerHeight) {
+  //     // Scroll the viewport to ensure the cursor is in view
+  //     window.scrollBy(0, cursor.top - window.innerHeight / 2);
+  //   }
+  // }
   //
   // function isLink(str) {
   //   const regex = /((http|https):\/\/[^\s]+)/g
