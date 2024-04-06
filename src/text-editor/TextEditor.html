@@ -67,6 +67,7 @@
 </div>
 
 <script>
+  // do not delete this function: formatDoc
   function formatDoc(cmd, value = null) {
     if (value) {
       document.execCommand(cmd, false, value);
@@ -95,7 +96,7 @@
     return regex.test(str);
   }
 
-  function incrementListItemNumber(str) {
+  function getIncrementedNumber(str) {
     const regex = /^(\d+)([.)])\s/;
     const match = str.match(regex);
     if (match) {
@@ -107,107 +108,41 @@
     return str;
   }
 
+  function getIncrementedNumberInString(str) {
+    const number = getIncrementedNumber(str);
+    const t = str.split(" ");
+    const nn = t.slice(1, t.length).join(" ");
+    return number + nn;
+  }
+
   function numberingHasContent(str) {
     const splitStr = str.split(" ");
-    // console.log(splitStr);
     return splitStr.length > 1 && splitStr[1] !== "";
   }
 
-  function isLastElementInsideDiv(contentElement) {
-    let lastNode = contentElement.lastChild;
-    return lastNode && lastNode.nodeName.toLowerCase() === "div";
-  }
-
-  function findDifference(prev, newList) {
-    for (var i = 0; i < newList.length; i++) {
-      if (i > prev.length || prev[i] !== newList[i]) {
-        return newList[i];
-      }
-    }
-
-    return null;
-  }
-
-  function getPos() {
-    var sel = document.getSelection(),
-      nd = sel.anchorNode,
-      text = nd.textContent.slice(0, sel.focusOffset);
-
-    // console.log(nd.textContent);
-    var line = content.innerText.split("\n").length;
-    var col = text.split("\n").pop().length;
-    // console.log("row:" + line + ", col:" + col);
-  }
-
-  function moveCursorOneSpaceBack() {
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const container = range.commonAncestorContainer;
-
-      // Check if the cursor is positioned inside a text node
-      // if (container.nodeType === Node.TEXT_NODE) {
-      const offset = range.startOffset;
-
-      // Move the cursor one space back
-      if (offset > 0) {
-        range.setStart(container, offset - 1);
-        range.collapse(true);
-
-        // Update the selection with the new range
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-      // }
-    }
-  }
-
   function getCaretCharacterOffsetWithin(element) {
-    var caretOffset = 0;
-    var doc = element.ownerDocument || element.document;
-    var win = doc.defaultView || doc.parentWindow;
-    var sel;
+    let caretOffset = 0;
+    let doc = element.ownerDocument || element.document;
+    let win = doc.defaultView || doc.parentWindow;
+    let sel;
     if (typeof win.getSelection != "undefined") {
       sel = win.getSelection();
       if (sel.rangeCount > 0) {
-        var range = win.getSelection().getRangeAt(0);
-        var preCaretRange = range.cloneRange();
+        let range = win.getSelection().getRangeAt(0);
+        let preCaretRange = range.cloneRange();
         preCaretRange.selectNodeContents(element);
         preCaretRange.setEnd(range.endContainer, range.endOffset);
         caretOffset = preCaretRange.toString().length;
       }
     } else if ((sel = doc.selection) && sel.type != "Control") {
-      var textRange = sel.createRange();
-      var preCaretTextRange = doc.body.createTextRange();
+      let textRange = sel.createRange();
+      let preCaretTextRange = doc.body.createTextRange();
       preCaretTextRange.moveToElementText(element);
       preCaretTextRange.setEndPoint("EndToEnd", textRange);
       caretOffset = preCaretTextRange.text.length;
     }
     return caretOffset;
   }
-
-  const getContainingElement = () => {
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const container = range.commonAncestorContainer;
-      // console.log(range);
-      // console.log(container.parentNode);
-      // console.log(container.nodeType);
-      //
-
-      // console.log(range.commonAncestorContainer);
-      // Traverse up the DOM tree until we find a suitable container within the editable div
-      let node = container.nodeType === 1 ? container : container.parentNode;
-      // console.log(node.parentNode);
-      // while (node !== null && node.parentNode !== document.getElementById('content')) {
-      //   node = node.parentNode;
-      // }
-
-      return node;
-    }
-    return null;
-  };
 
   function isEndOfLine(listOfContents, cursorPosition) {
     let count = 0;
@@ -223,19 +158,9 @@
   }
 
   function setCursorPosition(position) {
-    // select content editable div element
-
-    // select text from a window
-    var selectedText = window.getSelection();
-
-    // create a range
-    var selectedRange = document.createRange();
-
-    // set starting position of the cursor in the texts
-
-    let count = 0;
+    let selectedText = window.getSelection();
+    let selectedRange = document.createRange();
     for (let i = 0; i < content.childNodes.length; i++) {
-      console.log(content.childNodes[i].textContent);
       if (position <= content.childNodes[i].textContent.length) {
         selectedRange.setStart(content.childNodes[i], position);
         break;
@@ -244,50 +169,51 @@
         selectedRange.setStartAfter(content.childNodes[i]);
         break;
       }
-      // if (count === 1 && position === 1) {
-      //   selectedRange.setStart(content.childNodes[i], 0);
-      //   break;
-      // }
       position = position - content.childNodes[i].textContent.length;
     }
-
-    // collapse the range at boundaries
     selectedRange.collapse(true);
-
-    // remove all ranges
     selectedText.removeAllRanges();
-
-    // add a new range to the selected text
     selectedText.addRange(selectedRange);
-
-    // focus the cursor
     content.focus();
   }
 
   function getNodes(content, numberLineHasContent, number, lastInput) {
-
     let nodes = [];
-
+    let incrementNextNumber = false;
     for (let i = 0; i < content.childNodes.length; i++) {
       if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
-        nodes.push(content.childNodes[i].textContent);
+        if (startsWithNumberedListItem(content.childNodes[i].textContent) && incrementNextNumber){
+          nodes.push(getIncrementedNumberInString(content.childNodes[i].textContent))
+        } else {
+          nodes.push(content.childNodes[i].textContent);
+          incrementNextNumber = false;
+        }
         if (content.childNodes.length === 1) {
           nodes.push(document.createElement("br"));
           if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
             nodes.push(number);
             nodes.push(document.createElement("br"));
+            incrementNextNumber = true;
           }
         } else {
           if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
             nodes.push(document.createElement("br"));
             nodes.push(number);
-          }
-          if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+            incrementNextNumber = true;
+          } else if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+            nodes.pop();
+            incrementNextNumber = false;
+            if (content.childNodes[i + 1] === undefined
+              || content.childNodes[i + 1].tagName !== "BR") {
+              nodes.push(document.createElement("br"));
+            }
+          } else if (content.childNodes[i].nodeType === Node.TEXT_NODE && content.childNodes[i
+          + 1].tagName === "DIV") {
             nodes.push(document.createElement("br"));
+            incrementNextNumber = false;
           }
         }
       } else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
-
         if (content.childNodes[i].childNodes.length > 1) {
           nodes = [
             ...nodes,
@@ -296,130 +222,49 @@
         } else {
           if (content.childNodes[i].textContent.length === 0) {
             nodes.push(document.createElement("br"));
+            if (content.childNodes[i+1] !==  undefined && !startsWithNumberedListItem(content.childNodes[i+1].textContent)) {
+              incrementNextNumber = false;
+            }
           } else {
             nodes.push(content.childNodes[i].textContent);
             nodes.push(document.createElement("br"));
             if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
               nodes.push(number);
               nodes.push(document.createElement("br"));
+              incrementNextNumber = true;
             }
           }
         }
-
       }
     }
-
     return nodes;
   }
 
   content.addEventListener("keypress", function(event) {
     if (event.key === "Enter") {
-
-      let lastInput = getCurrentLine(content);
+      let lastInput = getCurrentLine();
       if (startsWithNumberedListItem(lastInput)) {
-
         const numberLineHasContent = numberingHasContent(lastInput);
-
-        // if (!numberLineHasContent) {
-        //   return;
-        // }
-
-        event.preventDefault();
         const cursorPosition = getCaretCharacterOffsetWithin(content);
         let listOfContents = content.innerText.split("\n");
-
         if (isEndOfLine(listOfContents, cursorPosition)) {
+          event.preventDefault();
           let nodes = [];
           let number = "";
-
           if (numberLineHasContent) {
-            number = incrementListItemNumber(lastInput);
+            number = getIncrementedNumber(lastInput);
           }
-
           nodes = getNodes(content, numberLineHasContent, number, lastInput);
-
-          // for (let i = 0; i < content.childNodes.length; i++) {
-          //   if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
-          //     nodes.push(content.childNodes[i].textContent);
-          //     if (content.childNodes.length === 1) {
-          //       nodes.push(document.createElement("br"));
-          //       if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-          //         nodes.push(number);
-          //         nodes.push(document.createElement("br"));
-          //       }
-          //     } else {
-          //       if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-          //         nodes.push(document.createElement("br"));
-          //         nodes.push(number);
-          //       }
-          //       if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-          //         nodes.push(document.createElement("br"));
-          //       }
-          //     }
-          //   } else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
-          //     if (content.childNodes[i].textContent.length === 0) {
-          //       nodes.push(document.createElement("br"));
-          //     } else {
-          //       nodes.push(content.childNodes[i].textContent);
-          //       nodes.push(document.createElement("br"));
-          //       if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-          //         nodes.push(number);
-          //         nodes.push(document.createElement("br"));
-          //       }
-          //     }
-          //   }
-          // }
-
           content.replaceChildren(...nodes);
-          setCursorPosition(cursorPosition + (number.length === 0 ? 1 : number.length));
+          if (numberLineHasContent) {
+            setCursorPosition(cursorPosition + (number.length === 0 ? 1 : number.length));
+          } else {
+            setCursorPosition(cursorPosition - (lastInput.length === 0 ? 1 : lastInput.length) + 1);
+          }
         }
       }
-      // else {
-      //   event.preventDefault();
-      //   const cursorPosition = getCaretCharacterOffsetWithin(content);
-      //   let listOfContents = content.innerText.split("\n");
-      //
-      //   let nodes = [];
-      //
-      //   for (let i = 0; i < content.childNodes.length; i++) {
-      //     // console.log(content.childNodes[i]);
-      //     if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
-      //       nodes.push(content.childNodes[i].textContent);
-      //       if (content.childNodes.length === i+1) {
-      //         nodes.push(document.createElement("br"));
-      //         nodes.push(document.createElement("br"));
-      //       }
-      //     } else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
-      //       if (content.childNodes[i].textContent.length === 0) {
-      //         if (content.childNodes.length === i+1) {
-      //           nodes.push(document.createElement("br"));
-      //           nodes.push(document.createElement("br"));
-      //         } else {
-      //           nodes.push(document.createElement("br"));
-      //         }
-      //       } else {
-      //         nodes.push(content.childNodes[i].textContent);
-      //         nodes.push(document.createElement("br"));
-      //       }
-      //     }
-      //   }
-      //
-      //   content.replaceChildren(...nodes);
-      //   if (isEndOfLine(listOfContents, cursorPosition)) {
-      //     // moveCursorToEnd(content)
-      //     setCursorPosition(cursorPosition+1);
-      //   }
-      //
-      // }
     }
   });
-
-  function removeLastLine(str) {
-    // console.log(str);
-    let lines = str.split("\n");
-    lines.pop();
-    return lines.join("\n");
-  }
 
   function moveCursorToEnd(el) {
     if (
@@ -440,77 +285,28 @@
     }
   }
 
-  function getCurrentLine(contentEditableElement) {
+  function getCurrentLine() {
     const selection = window.getSelection();
-
     if (!selection || selection.rangeCount === 0) {
       return null; // No selection or range available
     }
-
     const range = selection.getRangeAt(0);
     const startNode = range.startContainer;
-
     if (startNode.nodeType !== Node.TEXT_NODE) {
       return null; // Cursor is not positioned within text node
     }
-
     const text = startNode.textContent;
     const startIndex = range.startOffset;
-
     let lineStartIndex = startIndex;
     let lineEndIndex = startIndex;
-
-    // Find the start index of the current line
     while (lineStartIndex > 0 && text[lineStartIndex - 1] !== "\n") {
       lineStartIndex--;
     }
-
-    // Find the end index of the current line
     while (lineEndIndex < text.length && text[lineEndIndex] !== "\n") {
       lineEndIndex++;
     }
-
-    // Extract the current line text
-    const currentLine = text.substring(lineStartIndex, lineEndIndex);
-
-    return currentLine;
+    return text.substring(lineStartIndex, lineEndIndex);
   }
-
-  //
-  // function ensureCursorInView() {
-  //   let cursor = window.getSelection().getRangeAt(0).getBoundingClientRect();
-  //   if (cursor.top < 0 || cursor.bottom > window.innerHeight) {
-  //     // Scroll the viewport to ensure the cursor is in view
-  //     window.scrollBy(0, cursor.top - window.innerHeight / 2);
-  //   }
-  // }
-  //
-  // function isLink(str) {
-  //   const regex = /((http|https):\/\/[^\s]+)/g
-  //   return regex.test(str);
-  // }
-  //
-  // content.addEventListener("paste", function(event) {
-  // TODO: populate prevList
-  //   var text = event.clipboardData.getData("text/plain");
-  //   // console.log(text);
-  //   if (isLink(text)) {
-  //     const contentt = content.innerHTML;
-  //     // console.log(content.innerText.length);
-  //     let replacedContent;
-  //     if (content.innerText.length === 0) {
-  //       event.preventDefault();
-  //       replacedContent = `<p><a href="${text}" target="_blank">${text}</a></p>`;
-  //       content.innerHTML += replacedContent;
-  //     } else {
-  //       const regex = /((http|https):\/\/[^\s]+)/g;
-  //       replacedContent = contentt.replace(regex, "<a href=\"$1\" target=\"_blank\">$1</a>");
-  //       // console.log("2 replaced: " + replacedContent);
-  //       content.innerHTML = replacedContent;
-  //     }
-  //   }
-
-  // });
 
 </script>
 </body>
