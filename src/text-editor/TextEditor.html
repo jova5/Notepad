@@ -182,8 +182,8 @@
     let incrementNextNumber = false;
     for (let i = 0; i < content.childNodes.length; i++) {
       if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
-        if (startsWithNumberedListItem(content.childNodes[i].textContent) && incrementNextNumber){
-          nodes.push(getIncrementedNumberInString(content.childNodes[i].textContent))
+        if (startsWithNumberedListItem(content.childNodes[i].textContent) && incrementNextNumber) {
+          nodes.push(getIncrementedNumberInString(content.childNodes[i].textContent));
         } else {
           nodes.push(content.childNodes[i].textContent);
           incrementNextNumber = false;
@@ -222,7 +222,8 @@
         } else {
           if (content.childNodes[i].textContent.length === 0) {
             nodes.push(document.createElement("br"));
-            if (content.childNodes[i+1] !==  undefined && !startsWithNumberedListItem(content.childNodes[i+1].textContent)) {
+            if (content.childNodes[i + 1] !== undefined && !startsWithNumberedListItem(
+              content.childNodes[i + 1].textContent)) {
               incrementNextNumber = false;
             }
           } else {
@@ -237,6 +238,34 @@
         }
       }
     }
+    return nodes;
+  }
+
+  function getNodesSimple(content) {
+    let nodes = [];
+    for (let i = 0; i < content.childNodes.length; i++) {
+      if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
+        nodes.push(content.childNodes[i].textContent);
+        if (content.childNodes[i + 1].textContent.length > 0) {
+          nodes.push(document.createElement("br"));
+        }
+      } else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
+        if (content.childNodes[i].childNodes.length > 1) {
+          nodes = [
+            ...nodes,
+            ...getNodes(content.childNodes[i]),
+          ];
+        } else {
+          if (content.childNodes[i].textContent.length === 0) {
+            nodes.push(document.createElement("br"));
+          } else {
+            nodes.push(content.childNodes[i].textContent);
+            nodes.push(document.createElement("br"));
+          }
+        }
+      }
+    }
+
     return nodes;
   }
 
@@ -266,24 +295,23 @@
     }
   });
 
-  function moveCursorToEnd(el) {
-    if (
-      typeof window.getSelection !== "undefined" &&
-      typeof document.createRange !== "undefined"
-    ) {
-      let range = document.createRange();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      let sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-    } else if (typeof document.body.createTextRange !== "undefined") {
-      let textRange = document.body.createTextRange();
-      textRange.moveToElementText(el);
-      textRange.collapse(false);
-      textRange.select();
-    }
-  }
+  content.addEventListener("paste", function(event) {
+
+    event.preventDefault();
+
+    const currentCursorPosition = getCaretCharacterOffsetWithin(content)
+
+    let splitText = (event.originalEvent || event).clipboardData.getData("text/plain").split("\r");
+    const splitTextLength = splitText.length - 1;
+    const text = splitText.join("");
+
+    document.execCommand("insertText", false, text);
+
+    let nodes = getNodesSimple(content);
+    content.replaceChildren(...nodes);
+
+    setCursorPosition(currentCursorPosition + text.length - splitTextLength);
+  });
 
   function getCurrentLine() {
     const selection = window.getSelection();
