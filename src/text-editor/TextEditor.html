@@ -157,12 +157,14 @@
     return false;
   }
 
-  function setCursorPosition(position) {
-    let selectedText = window.getSelection();
-    let selectedRange = document.createRange();
+  function setCursorPosition(content, selectedRange, position) {
     for (let i = 0; i < content.childNodes.length; i++) {
       if (position <= content.childNodes[i].textContent.length) {
-        selectedRange.setStart(content.childNodes[i], position);
+        if (content.childNodes[i].childNodes.length >= 1) {
+          setCursorPosition(content.childNodes[i], selectedRange, position);
+        } else {
+          selectedRange.setStart(content.childNodes[i], position);
+        }
         break;
       }
       if (content.childNodes[i].textContent.length === 0 && position === 1) {
@@ -171,67 +173,143 @@
       }
       position = position - content.childNodes[i].textContent.length;
     }
-    selectedRange.collapse(true);
-    selectedText.removeAllRanges();
-    selectedText.addRange(selectedRange);
-    content.focus();
   }
 
   function getNodes(content, numberLineHasContent, number, lastInput) {
     let nodes = [];
     let incrementNextNumber = false;
     for (let i = 0; i < content.childNodes.length; i++) {
+      // TEXT odavde
       if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
-        if (startsWithNumberedListItem(content.childNodes[i].textContent) && incrementNextNumber) {
-          nodes.push(getIncrementedNumberInString(content.childNodes[i].textContent));
-        } else {
-          nodes.push(content.childNodes[i].textContent);
-          incrementNextNumber = false;
-        }
-        if (content.childNodes.length === 1) {
-          nodes.push(document.createElement("br"));
+        console.log("text");
+        // if (startsWithNumberedListItem(content.childNodes[i].textContent) && incrementNextNumber) {
+        //   console.log("text 1");
+        //   nodes.push(getIncrementedNumberInString(content.childNodes[i].textContent));
+        // } else {
+          console.log("text 2");
+
+          const div = document.createElement("div");
+          div.textContent = content.childNodes[i].textContent;
+          nodes.push(div);
+          // incrementNextNumber = false;
+        // }
+        // if (content.childNodes.length === 1) {
+        //   console.log("text 3");
+        //
+        //   // const div = document.createElement("div");
+        //   const br = document.createElement("br");
+        //   // div.appendChild(br);
+        //   // nodes.push(br);
           if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-            nodes.push(number);
-            nodes.push(document.createElement("br"));
-            incrementNextNumber = true;
+            console.log("text 4");
+
+            const div = document.createElement("div");
+            div.textContent = number;
+            nodes.push(div);
+            // const divbr = document.createElement("div");
+            const br = document.createElement("br");
+            // divbr.appendChild(br);
+            // nodes.push(br);
+            // incrementNextNumber = true;
           }
-        } else {
-          if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-            nodes.push(document.createElement("br"));
-            nodes.push(number);
-            incrementNextNumber = true;
-          } else if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-            nodes.pop();
-            incrementNextNumber = false;
-            if (content.childNodes[i + 1] === undefined
-              || content.childNodes[i + 1].tagName !== "BR") {
-              nodes.push(document.createElement("br"));
-            }
-          } else if (content.childNodes[i].nodeType === Node.TEXT_NODE && content.childNodes[i
-          + 1].tagName === "DIV") {
-            nodes.push(document.createElement("br"));
-            incrementNextNumber = false;
-          }
-        }
-      } else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
+        // } else {
+          console.log("text 5");
+
+          // if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+          //   console.log("text 6");
+          //
+          //   // const divbr = document.createElement("div");
+          //   const br = document.createElement("br");
+          //   // divbr.appendChild(br);
+          //   // nodes.push(br);
+          //
+          //   const div = document.createElement("div");
+          //   div.textContent = number;
+          //   nodes.push(div);
+          //   incrementNextNumber = true;
+          // } else if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+          //   console.log("text 7");
+          //
+          //   nodes.pop();
+          //   incrementNextNumber = false;
+          //   if (content.childNodes[i + 1] === undefined
+          //     || content.childNodes[i + 1].tagName !== "BR") {
+          //     console.log("text 8");
+          //
+          //     // const divbr = document.createElement("div");
+          //     const br = document.createElement("br");
+          //     // divbr.appendChild(br);
+          //     // nodes.push(br);
+          //   }
+          // } else
+          //   if (content.childNodes[i].nodeType === Node.TEXT_NODE
+          //     && content.childNodes[i + 1]
+          //     && content.childNodes[i + 1].tagName === "DIV") {
+          //   console.log("text 9");
+          //
+          //   // const divbr = document.createElement("div");
+          //   // const br = document.createElement("br");
+          //   // divbr.appendChild(br);
+          //   // nodes.push(divbr);
+          //   // incrementNextNumber = false;
+          // }
+        // }
+      }
+
+        // ###############################################################
+      // DIV odavde
+
+      else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
         if (content.childNodes[i].childNodes.length > 1) {
           nodes = [
             ...nodes,
             ...getNodes(content.childNodes[i], numberLineHasContent, number, lastInput),
           ];
+        } else if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+          // If numbering does not contain content
+          // then delete current line
+
+          const div = document.createElement("div");
+          div.appendChild(document.createElement("br"));
+          nodes.push(div);
+          incrementNextNumber = false;
+
         } else {
+          // If numbering does contain content
+
           if (content.childNodes[i].textContent.length === 0) {
-            nodes.push(document.createElement("br"));
-            if (content.childNodes[i + 1] !== undefined && !startsWithNumberedListItem(
-              content.childNodes[i + 1].textContent)) {
+            const divbr = document.createElement("div");
+            const br = document.createElement("br");
+            divbr.appendChild(br);
+            nodes.push(divbr);
+            incrementNextNumber = false;
+
+          } else {
+            // then copy current line
+
+            if (startsWithNumberedListItem(content.childNodes[i].textContent)
+              && incrementNextNumber) {
+              // if current line is numbering and has numbering after
+              // then increase numbering and copy content
+
+              const div = document.createElement("div");
+              div.textContent = getIncrementedNumberInString(content.childNodes[i].textContent);
+              nodes.push(div);
+            } else {
+              // then copy current line
+
+              const div = document.createElement("div");
+              div.textContent = content.childNodes[i].textContent;
+              nodes.push(div);
               incrementNextNumber = false;
             }
-          } else {
-            nodes.push(content.childNodes[i].textContent);
-            nodes.push(document.createElement("br"));
+
             if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-              nodes.push(number);
-              nodes.push(document.createElement("br"));
+              // double check if current line has content
+              // and add new line with incremented number
+              const div = document.createElement("div");
+              div.textContent = number;
+              nodes.push(div);
               incrementNextNumber = true;
             }
           }
@@ -286,9 +364,23 @@
           nodes = getNodes(content, numberLineHasContent, number, lastInput);
           content.replaceChildren(...nodes);
           if (numberLineHasContent) {
-            setCursorPosition(cursorPosition + (number.length === 0 ? 1 : number.length));
+            let selectedText = window.getSelection();
+            let selectedRange = document.createRange();
+            setCursorPosition(content, selectedRange,
+              cursorPosition + (number.length === 0 ? 1 : number.length));
+            selectedRange.collapse(true);
+            selectedText.removeAllRanges();
+            selectedText.addRange(selectedRange);
+            content.focus();
           } else {
-            setCursorPosition(cursorPosition - (lastInput.length === 0 ? 1 : lastInput.length) + 1);
+            let selectedText = window.getSelection();
+            let selectedRange = document.createRange();
+            setCursorPosition(content, selectedRange,
+              cursorPosition - (lastInput.length === 0 ? 1 : lastInput.length) + 1);
+            selectedRange.collapse(true);
+            selectedText.removeAllRanges();
+            selectedText.addRange(selectedRange);
+            content.focus();
           }
         }
       }
@@ -299,7 +391,7 @@
 
     event.preventDefault();
 
-    const currentCursorPosition = getCaretCharacterOffsetWithin(content)
+    const currentCursorPosition = getCaretCharacterOffsetWithin(content);
 
     let splitText = (event.originalEvent || event).clipboardData.getData("text/plain").split("\r");
     const splitTextLength = splitText.length - 1;
@@ -310,7 +402,14 @@
     let nodes = getNodesSimple(content);
     content.replaceChildren(...nodes);
 
-    setCursorPosition(currentCursorPosition + text.length - splitTextLength);
+    let selectedText = window.getSelection();
+    let selectedRange = document.createRange();
+    setCursorPosition(content, selectedRange,
+      currentCursorPosition + text.length - splitTextLength);
+    selectedRange.collapse(true);
+    selectedText.removeAllRanges();
+    selectedText.addRange(selectedRange);
+    content.focus();
   });
 
   function getCurrentLine() {
