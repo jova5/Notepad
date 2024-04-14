@@ -62,6 +62,65 @@
 </head>
 <body>
 
+
+<div class="toolbar">
+  <div class="head">
+    <input type="text" placeholder="Filename" value="untitled" id="filename">
+    <select onchange="fileHandle(this.value); this.selectedIndex=0">
+      <option value="" selected="" hidden="" disabled="">File</option>
+      <option value="new">New file</option>
+      <option value="txt">Save as txt</option>
+      <option value="pdf">Save as pdf</option>
+    </select>
+    <select onchange="formatDoc('formatBlock', this.value); this.selectedIndex=0;">
+      <option value="" selected="" hidden="" disabled="">Format</option>
+      <option value="h1">Heading 1</option>
+      <option value="h2">Heading 2</option>
+      <option value="h3">Heading 3</option>
+      <option value="h4">Heading 4</option>
+      <option value="h5">Heading 5</option>
+      <option value="h6">Heading 6</option>
+      <option value="p">Paragraph</option>
+    </select>
+    <select onchange="formatDoc('fontSize', this.value); this.selectedIndex=0;">
+      <option value="" selected="" hidden="" disabled="">Font size</option>
+      <option value="1">Extra small</option>
+      <option value="2">Small</option>
+      <option value="3">Regular</option>
+      <option value="4">Medium</option>
+      <option value="5">Large</option>
+      <option value="6">Extra Large</option>
+      <option value="7">Big</option>
+    </select>
+    <div class="color">
+      <span>Color</span>
+      <input type="color" oninput="formatDoc('foreColor', this.value); this.value='#000000';">
+    </div>
+    <div class="color">
+      <span>Background</span>
+      <input type="color" oninput="formatDoc('hiliteColor', this.value); this.value='#000000';">
+    </div>
+  </div>
+  <div class="btn-toolbar">
+    <button onclick="formatDoc('undo')"><i class='bx bx-undo'></i></button>
+    <button onclick="formatDoc('redo')"><i class='bx bx-redo'></i></button>
+    <button onclick="formatDoc('bold')"><i class='bx bx-bold'></i></button>
+    <button onclick="formatDoc('underline')"><i class='bx bx-underline'></i></button>
+    <button onclick="formatDoc('italic')"><i class='bx bx-italic'></i></button>
+    <button onclick="formatDoc('strikeThrough')"><i class='bx bx-strikethrough'></i></button>
+    <button onclick="formatDoc('justifyLeft')"><i class='bx bx-align-left'></i></button>
+    <button onclick="formatDoc('justifyCenter')"><i class='bx bx-align-middle'></i></button>
+    <button onclick="formatDoc('justifyRight')"><i class='bx bx-align-right'></i></button>
+    <button onclick="formatDoc('justifyFull')"><i class='bx bx-align-justify'></i></button>
+    <button onclick="formatDoc('insertOrderedList')"><i class='bx bx-list-ol'></i></button>
+    <button onclick="formatDoc('insertUnorderedList')"><i class='bx bx-list-ul'></i></button>
+    <button onclick="addLink()"><i class='bx bx-link'></i></button>
+    <button onclick="formatDoc('unlink')"><i class='bx bx-unlink'></i></button>
+    <button id="show-code" data-active="false">&lt;/&gt;</button>
+  </div>
+</div>
+
+
 <div class="container">
   <div id="content" contenteditable="true" spellcheck="false"></div>
 </div>
@@ -168,7 +227,7 @@
         break;
       }
       if (content.childNodes[i].textContent.length === 0 && position === 1) {
-        selectedRange.setStartAfter(content.childNodes[i]);
+        selectedRange.setStartBefore(content.childNodes[i]);
         break;
       }
       position = position - content.childNodes[i].textContent.length;
@@ -179,19 +238,20 @@
     let nodes = [];
     let incrementNextNumber = false;
     for (let i = 0; i < content.childNodes.length; i++) {
+      // console.log(content.childNodes[i].textContent);
       // TEXT odavde
       if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
-        console.log("text");
+        // console.log("text");
         // if (startsWithNumberedListItem(content.childNodes[i].textContent) && incrementNextNumber) {
         //   console.log("text 1");
         //   nodes.push(getIncrementedNumberInString(content.childNodes[i].textContent));
         // } else {
-          console.log("text 2");
+        // console.log("text 2");
 
-          const div = document.createElement("div");
-          div.textContent = content.childNodes[i].textContent;
-          nodes.push(div);
-          // incrementNextNumber = false;
+        const div = document.createElement("div");
+        div.textContent = content.childNodes[i].textContent;
+        nodes.push(div);
+        // incrementNextNumber = false;
         // }
         // if (content.childNodes.length === 1) {
         //   console.log("text 3");
@@ -200,59 +260,59 @@
         //   const br = document.createElement("br");
         //   // div.appendChild(br);
         //   // nodes.push(br);
-          if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-            console.log("text 4");
+        if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+          // console.log("text 4");
 
-            const div = document.createElement("div");
-            div.textContent = number;
-            nodes.push(div);
-            // const divbr = document.createElement("div");
-            const br = document.createElement("br");
-            // divbr.appendChild(br);
-            // nodes.push(br);
-            // incrementNextNumber = true;
-          }
+          const div = document.createElement("div");
+          div.textContent = number;
+          nodes.push(div);
+          // const divbr = document.createElement("div");
+          const br = document.createElement("br");
+          // divbr.appendChild(br);
+          // nodes.push(br);
+          // incrementNextNumber = true;
+        }
         // } else {
-          console.log("text 5");
+        // console.log("text 5");
 
-          // if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-          //   console.log("text 6");
-          //
-          //   // const divbr = document.createElement("div");
-          //   const br = document.createElement("br");
-          //   // divbr.appendChild(br);
-          //   // nodes.push(br);
-          //
-          //   const div = document.createElement("div");
-          //   div.textContent = number;
-          //   nodes.push(div);
-          //   incrementNextNumber = true;
-          // } else if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-          //   console.log("text 7");
-          //
-          //   nodes.pop();
-          //   incrementNextNumber = false;
-          //   if (content.childNodes[i + 1] === undefined
-          //     || content.childNodes[i + 1].tagName !== "BR") {
-          //     console.log("text 8");
-          //
-          //     // const divbr = document.createElement("div");
-          //     const br = document.createElement("br");
-          //     // divbr.appendChild(br);
-          //     // nodes.push(br);
-          //   }
-          // } else
-          //   if (content.childNodes[i].nodeType === Node.TEXT_NODE
-          //     && content.childNodes[i + 1]
-          //     && content.childNodes[i + 1].tagName === "DIV") {
-          //   console.log("text 9");
-          //
-          //   // const divbr = document.createElement("div");
-          //   // const br = document.createElement("br");
-          //   // divbr.appendChild(br);
-          //   // nodes.push(divbr);
-          //   // incrementNextNumber = false;
-          // }
+        // if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+        //   console.log("text 6");
+        //
+        //   // const divbr = document.createElement("div");
+        //   const br = document.createElement("br");
+        //   // divbr.appendChild(br);
+        //   // nodes.push(br);
+        //
+        //   const div = document.createElement("div");
+        //   div.textContent = number;
+        //   nodes.push(div);
+        //   incrementNextNumber = true;
+        // } else if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
+        //   console.log("text 7");
+        //
+        //   nodes.pop();
+        //   incrementNextNumber = false;
+        //   if (content.childNodes[i + 1] === undefined
+        //     || content.childNodes[i + 1].tagName !== "BR") {
+        //     console.log("text 8");
+        //
+        //     // const divbr = document.createElement("div");
+        //     const br = document.createElement("br");
+        //     // divbr.appendChild(br);
+        //     // nodes.push(br);
+        //   }
+        // } else
+        //   if (content.childNodes[i].nodeType === Node.TEXT_NODE
+        //     && content.childNodes[i + 1]
+        //     && content.childNodes[i + 1].tagName === "DIV") {
+        //   console.log("text 9");
+        //
+        //   // const divbr = document.createElement("div");
+        //   // const br = document.createElement("br");
+        //   // divbr.appendChild(br);
+        //   // nodes.push(divbr);
+        //   // incrementNextNumber = false;
+        // }
         // }
       }
 
@@ -361,8 +421,9 @@
           if (numberLineHasContent) {
             number = getIncrementedNumber(lastInput);
           }
-          nodes = getNodes(content, numberLineHasContent, number, lastInput);
-          content.replaceChildren(...nodes);
+          handleNumbering(content, numberLineHasContent, number, lastInput);
+          // nodes = getNodes(content, numberLineHasContent, number, lastInput);
+          // content.replaceChildren(...nodes);
           if (numberLineHasContent) {
             let selectedText = window.getSelection();
             let selectedRange = document.createRange();
@@ -386,6 +447,55 @@
       }
     }
   });
+
+  function handleNumbering(content, numberLineHasContent, number, lastInput) {
+    let incrementNextNumber = false;
+    let addBeforeCurrent = false;
+    let childNodeLength = content.childNodes.length;
+    for (let i = 0; i < childNodeLength; i++) {
+      // console.log(content.childNodes[i]);
+
+      if (content.childNodes[i].textContent === lastInput &&
+        !numberingHasContent(content.childNodes[i].textContent)) {
+        content.childNodes[i].textContent = "";
+        content.childNodes[i].appendChild(document.createElement("br"));
+        break;
+      }
+
+      if (!addBeforeCurrent && incrementNextNumber) {
+        content.childNodes[i].textContent = getIncrementedNumberInString(
+          content.childNodes[i].textContent);
+      }
+
+      if (content.childNodes[i].textContent === lastInput
+        && content.childNodes[i + 1] !== undefined) {
+        addBeforeCurrent = true;
+        incrementNextNumber = startsWithNumberedListItem(content.childNodes[i + 1].textContent);
+      } else if (content.childNodes[i].textContent === lastInput
+        && content.childNodes[i + 1] === undefined) {
+        // const tempDiv = document.createElement("div");
+        // div.textContent = content.childNodes[i].textContent;
+        // content.childNodes[i] = tempDiv
+
+        const div = document.createElement("div");
+        div.textContent = number;
+        content.appendChild(div);
+
+        addBeforeCurrent = false;
+      } else if (addBeforeCurrent) {
+        const div = document.createElement("div");
+        div.textContent = number;
+        content.insertBefore(div, content.childNodes[i]);
+        childNodeLength += 1;
+        addBeforeCurrent = false;
+      }
+
+      if (content.childNodes[i + 1] !== undefined
+        && !startsWithNumberedListItem(content.childNodes[i + 1].textContent)) {
+        incrementNextNumber = false;
+      }
+    }
+  }
 
   content.addEventListener("paste", function(event) {
 
