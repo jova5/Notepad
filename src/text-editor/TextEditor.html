@@ -128,11 +128,62 @@
 <script>
   // do not delete this function: formatDoc
   function formatDoc(cmd, value = null) {
-    if (value) {
-      document.execCommand(cmd, false, value);
-    } else {
-      document.execCommand(cmd);
+
+    if (cmd === 'undo') {
+      if (prevState.length === 0 && !wasThereMoreHistory) {
+        content.innerHTML = "<div></div>";
+
+        // content.focus();
+        // setTimeout(() => setCursorPosition(content, 0), 10);
+        let selectedText = window.getSelection();
+        let selectedRange = document.createRange();
+        setCursorPosition(content, selectedRange, 0);
+        selectedRange.collapse(true);
+        selectedText.removeAllRanges();
+        selectedText.addRange(selectedRange);
+        content.focus();
+      }else {
+        const listPrevState = prevState.pop();
+        if (listPrevState !== undefined) {
+          const tempHtml = listPrevState.htmlState;
+          if (tempHtml === content.innerHTML && prevState.length > 0) {
+            const tempPrevState = prevState.pop();
+            content.innerHTML = tempPrevState.htmlState;
+            let selectedText = window.getSelection();
+            let selectedRange = document.createRange();
+            setCursorPosition(content, selectedRange, tempPrevState.cursorPosition);
+            selectedRange.collapse(true);
+            selectedText.removeAllRanges();
+            selectedText.addRange(selectedRange);
+            content.focus();
+          } else if (tempHtml === content.innerHTML && prevState.length === 0){
+            content.innerHTML = "<div></div>";
+            let selectedText = window.getSelection();
+            let selectedRange = document.createRange();
+            setCursorPosition(content, selectedRange, 0);
+            selectedRange.collapse(true);
+            selectedText.removeAllRanges();
+            selectedText.addRange(selectedRange);
+            content.focus();
+          }else {
+            content.innerHTML = tempHtml;
+            let selectedText = window.getSelection();
+            let selectedRange = document.createRange();
+            setCursorPosition(content, selectedRange, listPrevState.cursorPosition);
+            selectedRange.collapse(true);
+            selectedText.removeAllRanges();
+            selectedText.addRange(selectedRange);
+            content.focus();
+          }
+        }
+      }
     }
+
+    // if (value) {
+    //   document.execCommand(cmd, false, value);
+    // } else {
+    //   document.execCommand(cmd);
+    // }
   }
 
   const content = document.getElementById("content");
@@ -148,6 +199,29 @@
         content.setAttribute("contenteditable", true);
       });
     });
+  });
+
+  let typingTimer;
+  const doneTypingInterval = 500; // 10 seconds
+  let prevState = [];
+  let wasThereMoreHistory = false;
+
+  // Event listener for any input in the contenteditable div
+  content.addEventListener('input', function() {
+
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+      const cursorPosition = getCaretCharacterOffsetWithin(content);
+      const htmlState = content.innerHTML;
+
+      if (prevState.length === 31) {
+        wasThereMoreHistory = true;
+        prevState.shift();
+        prevState.push({cursorPosition: cursorPosition, htmlState: htmlState})
+      } else {
+        prevState.push({cursorPosition: cursorPosition, htmlState: htmlState})
+      }
+    }, doneTypingInterval);
   });
 
   function startsWithNumberedListItem(str) {
