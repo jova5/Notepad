@@ -1,6 +1,7 @@
 import WebView from 'react-native-webview';
 import {forwardRef, Ref, useRef} from 'react';
-import {useTheme} from 'react-native-paper';
+import {TextInput, useTheme} from 'react-native-paper';
+import {transparent} from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 
 const myHtmlFile = require('./TextEditor.html');
 
@@ -22,18 +23,27 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
   // };
 
   return (
-    <WebView
-      ref={ref}
-      originWhitelist={['*']}
-      source={myHtmlFile}
-      javaScriptEnabled={true}
-      injectedJavaScriptBeforeContentLoaded={
-        'receiveDataFromReactNative("test")'
-      }
-      style={{
-        backgroundColor: theme.colors.background,
-      }}
-    />
+    <>
+      <TextInput
+        style={{backgroundColor: theme.colors.background}} //
+        underlineStyle={{display: 'none'}}
+        outlineStyle={{display: 'none'}}
+        placeholder="Title"
+        contentStyle={{fontSize: 24}}
+      />
+      <WebView
+        ref={ref}
+        originWhitelist={['*']}
+        source={myHtmlFile}
+        javaScriptEnabled={true}
+        // injectedJavaScriptBeforeContentLoaded={
+        //   'receiveDataFromReactNative("test")'
+        // }
+        style={{
+          backgroundColor: theme.colors.background,
+        }}
+      />
+    </>
   );
 });
 
