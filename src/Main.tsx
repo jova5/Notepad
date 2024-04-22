@@ -16,45 +16,46 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
+import SQLite from 'react-native-sqlite-storage';
 
-const data = [
-  {id: 1, title: 'A', content: 'Random content'},
-  {id: 2, title: 'B', content: 'Some other content for B'},
-  {id: 3, title: 'C', content: 'Content for C'},
-  {id: 4, title: 'D', content: 'Additional content for D'},
-  {id: 5, title: 'E', content: 'Content for E goes here'},
-  {id: 6, title: 'F', content: 'Content for F'},
-  {id: 7, title: 'G', content: 'Last but not least, content for G'},
-  {id: 8, title: 'A', content: 'Random content'},
-  {
-    id: 9,
-    title: 'B',
-    content: 'Some other content for B dsa dasd asd asd asd as dasd asd as d',
-  },
-  {id: 10, title: 'C', content: 'Content for C'},
-  {id: 11, title: 'D', content: 'Additional content for D'},
-  {id: 12, title: 'E', content: 'Content for E goes here'},
-  {id: 13, title: 'F', content: 'Content for F'},
-  {id: 14, title: 'G', content: 'Last but not least, content for G'},
-  {id: 15, title: 'A', content: 'Random content'},
-  {id: 16, title: 'B', content: 'Some other content for B'},
-  {id: 17, title: 'C', content: 'Content for C'},
-  {id: 18, title: 'D', content: 'Additional content for D'},
-  {id: 19, title: 'E', content: 'Content for E goes here'},
-  {id: 20, title: 'F', content: 'Content for F'},
-  {id: 21, title: 'G', content: 'Last but not least, content for G'},
-  {id: 22, title: 'A', content: 'Random content'},
-  {
-    id: 23,
-    title: 'B',
-    content: 'Some other content for B dsa dasd asd asd asd as dasd asd as d',
-  },
-  {id: 24, title: 'C', content: 'Content for C'},
-  {id: 25, title: 'D', content: 'Additional content for D'},
-  {id: 26, title: 'E', content: 'Content for E goes here'},
-  {id: 27, title: 'F', content: 'Content for F'},
-  {id: 28, title: 'G', content: 'Last but not least, content for G'},
-];
+// const data = [
+//   {id: 1, title: 'A', content: 'Random content'},
+//   {id: 2, title: 'B', content: 'Some other content for B'},
+//   {id: 3, title: 'C', content: 'Content for C'},
+//   {id: 4, title: 'D', content: 'Additional content for D'},
+//   {id: 5, title: 'E', content: 'Content for E goes here'},
+//   {id: 6, title: 'F', content: 'Content for F'},
+//   {id: 7, title: 'G', content: 'Last but not least, content for G'},
+//   {id: 8, title: 'A', content: 'Random content'},
+//   {
+//     id: 9,
+//     title: 'B',
+//     content: 'Some other content for B dsa dasd asd asd asd as dasd asd as d',
+//   },
+//   {id: 10, title: 'C', content: 'Content for C'},
+//   {id: 11, title: 'D', content: 'Additional content for D'},
+//   {id: 12, title: 'E', content: 'Content for E goes here'},
+//   {id: 13, title: 'F', content: 'Content for F'},
+//   {id: 14, title: 'G', content: 'Last but not least, content for G'},
+//   {id: 15, title: 'A', content: 'Random content'},
+//   {id: 16, title: 'B', content: 'Some other content for B'},
+//   {id: 17, title: 'C', content: 'Content for C'},
+//   {id: 18, title: 'D', content: 'Additional content for D'},
+//   {id: 19, title: 'E', content: 'Content for E goes here'},
+//   {id: 20, title: 'F', content: 'Content for F'},
+//   {id: 21, title: 'G', content: 'Last but not least, content for G'},
+//   {id: 22, title: 'A', content: 'Random content'},
+//   {
+//     id: 23,
+//     title: 'B',
+//     content: 'Some other content for B dsa dasd asd asd asd as dasd asd as d',
+//   },
+//   {id: 24, title: 'C', content: 'Content for C'},
+//   {id: 25, title: 'D', content: 'Additional content for D'},
+//   {id: 26, title: 'E', content: 'Content for E goes here'},
+//   {id: 27, title: 'F', content: 'Content for F'},
+//   {id: 28, title: 'G', content: 'Last but not least, content for G'},
+// ];
 
 const RenderListItem = ({
   item,
@@ -95,11 +96,40 @@ const RenderListItem = ({
   );
 };
 
+const db = SQLite.openDatabase(
+  {
+    name: 'Database',
+    location: 'default',
+  },
+  () => {},
+  error => {
+    console.log(error);
+  },
+);
+
 const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
   const theme = useTheme();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const navigation = useNavigation();
+  const [notepadData, setNotepadData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const data = [];
+    db.transaction(tx => {
+      tx.executeSql('SELECT * FROM notepad', [], (tx, result) => {
+        for (let i = 0; i < result.rows.length; i++) {
+          // console.log(result.rows.item(i));
+          data.push({
+            id: result.rows.item(i).id,
+            title: result.rows.item(i).title,
+            content: result.rows.item(i).content,
+          });
+        }
+        setNotepadData(data);
+      });
+    });
+  }, []);
 
   return (
     <SafeAreaView
@@ -128,7 +158,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
       <ScrollView scrollEnabled={true}>
         <View style={{flexDirection: 'row'}}>
           <View style={{flex: 1}}>
-            {data.map((item, index) => {
+            {notepadData.map((item, index) => {
               if (index % 2 === 0) {
                 return (
                   <RenderListItem
@@ -153,7 +183,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
             })}
           </View>
           <View style={{flex: 1}}>
-            {data.map((item, index) => {
+            {notepadData.map((item, index) => {
               if (index % 2 !== 0) {
                 return (
                   <RenderListItem

@@ -75,7 +75,9 @@
 
 
 <div class="container">
-  <div id="content" contenteditable="true" spellcheck="false"></div>
+  <div id="content" contenteditable="true" spellcheck="false">
+    <div id="placeholder">Note</div>
+  </div>
 </div>
 
 <script>
@@ -87,6 +89,8 @@
         position -= 1;
       }
       content.innerHTML = history[position].htmlState;
+      window.ReactNativeWebView.postMessage(content.innerHTML);
+
       let selectedText = window.getSelection();
       let selectedRange = document.createRange();
       setCursorPosition(content, selectedRange, history[position].cursorPosition);
@@ -99,6 +103,8 @@
         position += 1;
       }
       content.innerHTML = history[position].htmlState;
+      window.ReactNativeWebView.postMessage(content.innerHTML);
+
       let selectedText = window.getSelection();
       let selectedRange = document.createRange();
       setCursorPosition(content, selectedRange, history[position].cursorPosition);
@@ -124,6 +130,21 @@
     });
   });
 
+  content.addEventListener("focus", function() {
+    const placeholder = document.getElementById("placeholder")
+    placeholder.remove();
+  })
+
+  content.addEventListener("focusout", function() {
+    if (content.innerText === "") {
+      const placeholder = document.createElement("div");
+      placeholder.id = "placeholder";
+      placeholder.textContent = "Note";
+
+      content.appendChild(placeholder);
+    }
+  })
+
   let typingTimer;
   const doneTypingInterval = 500; // 10 seconds
   let history = [{ cursorPosition: 0, htmlState: "<div></div>" }];
@@ -137,6 +158,8 @@
       const cursorPosition = getCaretCharacterOffsetWithin(content);
       const htmlState = content.innerHTML;
       populateHistory(htmlState, cursorPosition);
+
+      window.ReactNativeWebView.postMessage(htmlState);
     }, doneTypingInterval);
   });
 

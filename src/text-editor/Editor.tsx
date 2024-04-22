@@ -1,5 +1,5 @@
 import WebView from 'react-native-webview';
-import {forwardRef, Ref, useRef} from 'react';
+import {forwardRef, Ref, useEffect, useRef, useState} from 'react';
 import {TextInput, useTheme} from 'react-native-paper';
 import {transparent} from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
 
@@ -7,6 +7,7 @@ const myHtmlFile = require('./TextEditor.html');
 
 const Editor = forwardRef((props, ref: Ref<WebView>) => {
   const theme = useTheme();
+  const [htmlContent, setHtmlContent] = useState('');
 
   // const webViewRef = ref;
   //
@@ -21,6 +22,17 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
   // const onLoadWebView = () => {
   //   sendDataToWebView(); // Send data after the WebView is loaded
   // };
+
+  const handleMessage = event => {
+    // Extract HTML content from the message
+    const receivedHtmlContent = event.nativeEvent.data;
+    // Update state with the received HTML content
+    setHtmlContent(receivedHtmlContent);
+  };
+
+  useEffect(() => {
+    console.log(htmlContent);
+  }, [htmlContent]);
 
   return (
     <>
@@ -39,6 +51,7 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
         // injectedJavaScriptBeforeContentLoaded={
         //   'receiveDataFromReactNative("test")'
         // }
+        onMessage={handleMessage}
         style={{
           backgroundColor: theme.colors.background,
         }}
