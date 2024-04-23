@@ -4,6 +4,7 @@ import {SafeAreaView, StyleSheet, View} from 'react-native';
 import Editor from './text-editor/Editor.tsx';
 import WebView from 'react-native-webview';
 import {createRef} from 'react';
+import {useAppSelector} from './redux/hooks.ts';
 
 const NoteEditHeader = () => {
   const navigation = useNavigation();

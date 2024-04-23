@@ -81,6 +81,13 @@
 </div>
 
 <script>
+
+  function receiveDataFromReactNative(data) {
+    if (data !== null && data !== undefined && data !== "") {
+      content.innerHTML = data;
+    }
+  }
+
   // do not delete this function: formatDoc
   function formatDoc(cmd, value = null) {
 

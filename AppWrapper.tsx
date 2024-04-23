@@ -3,6 +3,8 @@ import App from './App.tsx';
 import {useColorScheme} from 'react-native';
 import {darkThemeColors} from './colors/darkThemColors';
 import {lightThemeColors} from './colors/lightThemeColors';
+import {Provider} from 'react-redux';
+import {store} from './src/redux/store.ts';
 
 const AppWrapper = () => {
   const colorScheme = useColorScheme();
@@ -13,9 +15,11 @@ const AppWrapper = () => {
       : {...MD3LightTheme, colors: {...lightThemeColors}};
 
   return (
-    <PaperProvider theme={newTheme}>
-      <App />
-    </PaperProvider>
+    <Provider store={store}>
+      <PaperProvider theme={newTheme}>
+        <App />
+      </PaperProvider>
+    </Provider>
   );
 };
 

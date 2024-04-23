@@ -17,6 +17,8 @@ import {
 import React, {useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import SQLite from 'react-native-sqlite-storage';
+import {useAppDispatch} from './redux/hooks.ts';
+import {setOpenNoteInfo} from './redux/feature/note/noteSlice.ts';
 
 // const data = [
 //   {id: 1, title: 'A', content: 'Random content'},
@@ -114,6 +116,8 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
   const navigation = useNavigation();
   const [notepadData, setNotepadData] = useState<any[]>([]);
 
+  const dispatch = useAppDispatch();
+
   useEffect(() => {
     const data = [];
     db.transaction(tx => {
@@ -174,6 +178,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
                           prev.filter(prevId => prevId !== id),
                         );
                       } else {
+                        dispatch(setOpenNoteInfo(item));
                         navigation.navigate('NoteEdit');
                       }
                     }}
@@ -199,6 +204,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
                           prev.filter(prevId => prevId !== id),
                         );
                       } else {
+                        dispatch(setOpenNoteInfo(item));
                         navigation.navigate('NoteEdit');
                       }
                     }}
