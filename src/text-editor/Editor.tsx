@@ -1,30 +1,31 @@
 import WebView from 'react-native-webview';
-import {forwardRef, Ref, useEffect, useRef, useState} from 'react';
+import {forwardRef, Ref} from 'react';
 import {TextInput, useTheme} from 'react-native-paper';
-import {transparent} from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
-import {useAppSelector} from '../redux/hooks.ts';
+import {useAppDispatch, useAppSelector} from '../redux/hooks.ts';
+import {
+  setCurrentContent,
+  setCurrentTitle,
+  setId,
+  setNewContent,
+  setNewTitle,
+} from '../redux/feature/note/noteSlice.ts';
+import {getDBConnection, saveNote} from '../db/db-service.ts';
 
 const myHtmlFile = require('./TextEditor.html');
 
 const Editor = forwardRef((props, ref: Ref<WebView>) => {
   const theme = useTheme();
-  const [htmlContent, setHtmlContent] = useState('');
+  const dispatch = useAppDispatch();
 
   const id = useAppSelector(state => state.notes.id);
-  const title = useAppSelector(state => state.notes.title);
-  const content = useAppSelector(state => state.notes.content);
-
-  // const webViewRef = ref;
+  const title = useAppSelector(state => state.notes.currentTitle);
+  const content = useAppSelector(state => state.notes.currentContent);
 
   const onLoadWebView = () => {
     sendDataToWebView(); // Send data after the WebView is loaded
   };
 
   const sendDataToWebView = () => {
-    // const data = {key: 'value'}; // Your data object
-    // const jsonData = JSON.stringify(data); // Convert data to JSON string
-
-    // Inject JavaScript code into the WebView to call the function with the data
     if (ref !== null) {
       ref.current.injectJavaScript(
         `receiveDataFromReactNative(${JSON.stringify(content)})`,
@@ -32,16 +33,25 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
     }
   };
 
+  // @ts-ignore
   const handleMessage = event => {
-    // Extract HTML content from the message
     const receivedHtmlContent = event.nativeEvent.data;
-    // Update state with the received HTML content
-    setHtmlContent(receivedHtmlContent);
+
+    dispatch(setNewContent(receivedHtmlContent));
+    dispatch(setCurrentContent(receivedHtmlContent));
+    updateCurrentNote();
   };
 
-  useEffect(() => {
-    console.log(htmlContent);
-  }, [htmlContent]);
+  const updateCurrentNote = async () => {
+    try {
+      const db = await getDBConnection();
+      const note = {id: id, title: title, content: content};
+      const results = await saveNote(db, note);
+      dispatch(setId(results[0].insertId));
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <>
@@ -51,7 +61,12 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
         outlineStyle={{display: 'none'}}
         placeholder="Title"
         contentStyle={{fontSize: 24}}
-        value={title}
+        defaultValue={title}
+        onChangeText={text => {
+          dispatch(setNewTitle(text));
+          dispatch(setCurrentTitle(text));
+          updateCurrentNote();
+        }}
       />
       <WebView
         ref={ref}

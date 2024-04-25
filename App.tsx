@@ -1,10 +1,11 @@
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Home from './src/Home.tsx';
 import NoteEdit from './src/NoteEdit.tsx';
-import SQLite from 'react-native-sqlite-storage';
+import {createTable, getDBConnection} from './src/db/db-service.ts';
 
+// TODO: delete before production
 const data = [
   {id: 1, title: 'A', content: 'Random content'},
   {id: 2, title: 'B', content: 'Some other content for B'},
@@ -46,60 +47,21 @@ const data = [
 
 const Stack = createNativeStackNavigator();
 
-const db = SQLite.openDatabase(
-  {
-    name: 'Database',
-    location: 'default',
-  },
-  () => {},
-  error => {
-    console.log(error);
-  },
-);
-
 function App(): React.JSX.Element {
-  useEffect(() => {
-    createTable();
-    // populateTable();
+  const createTableCallback = useCallback(async () => {
+    try {
+      const db = await getDBConnection();
+      await createTable(db);
+      // TODO: delete before production
+      // await populateNotes(db, data);
+    } catch (error) {
+      console.error(error);
+    }
   }, []);
 
-  const createTable = () => {
-    db.transaction(tx => {
-      tx.executeSql(
-        'CREATE TABLE IF NOT EXISTS notepad ' +
-          '(' +
-          'id integer primary key autoincrement,' +
-          'title varchar(255),' +
-          'content text' +
-          ');',
-        [],
-        () => {
-          // console.log('success creating table');
-        },
-        error => {
-          // console.log(error);
-        },
-      );
-    });
-  };
-
-  const populateTable = () => {
-    console.log('ttt');
-    for (let d of data) {
-      db.transaction(tx => {
-        tx.executeSql(
-          'INSERT INTO notepad (title, content) VALUES (?, ?)',
-          [d.title, d.content],
-          () => {
-            // console.log('success insert');
-          },
-          error => {
-            // console.log(error);
-          },
-        );
-      });
-    }
-  };
+  useEffect(() => {
+    createTableCallback();
+  }, [createTableCallback]);
 
   return (
     <NavigationContainer>

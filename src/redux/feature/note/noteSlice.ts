@@ -1,41 +1,65 @@
-import {createSlice} from '@reduxjs/toolkit';
 import type {PayloadAction} from '@reduxjs/toolkit';
+import {createSlice} from '@reduxjs/toolkit';
 import type {RootState} from '../../store.ts';
 
 interface NoteState {
-  value: number;
+  notepadData: any[];
   id?: number;
-  title?: string;
-  content?: string;
+  currentTitle: string;
+  currentContent: string;
+  newTitle: string;
+  newContent: string;
+  refreshingNotes: boolean;
 }
 
 const initialState: NoteState = {
-  value: 0,
+  notepadData: [],
+  currentTitle: '',
+  currentContent: '',
+  newTitle: '',
+  newContent: '',
+  refreshingNotes: false,
 };
 
 export const noteSlice = createSlice({
   name: 'note',
   initialState,
   reducers: {
-    increment: state => {
-      state.value += 1;
+    setId: (state, action: PayloadAction<number>) => {
+      state.id = action.payload;
     },
-    decrement: state => {
-      state.value -= 1;
+    setNewTitle: (state, action: PayloadAction<string>) => {
+      state.newTitle = action.payload;
     },
-    // Use the PayloadAction type to declare the contents of `action.payload`
-    incrementByAmount: (state, action: PayloadAction<number>) => {
-      state.value += action.payload;
+    setNewContent: (state, action: PayloadAction<string>) => {
+      state.newContent = action.payload;
     },
-    setOpenNoteInfo: (state, action: PayloadAction<any>) => {
+    setCurrentTitle: (state, action: PayloadAction<string>) => {
+      state.currentTitle = action.payload;
+    },
+    setCurrentContent: (state, action: PayloadAction<string>) => {
+      state.currentContent = action.payload;
+    },
+    setNoteInfo: (state, action: PayloadAction<any>) => {
       state.id = action.payload.id;
-      state.title = action.payload.title;
-      state.content = action.payload.content;
+      state.currentTitle = action.payload.title;
+      state.currentContent = action.payload.content;
+    },
+    refreshNotes: state => {
+      state.refreshingNotes = !state.refreshingNotes;
     },
   },
 });
 
-export const {setOpenNoteInfo} = noteSlice.actions;
+export const {
+  setId,
+  setNewTitle,
+  setNewContent,
+  setCurrentTitle,
+  setCurrentContent,
+  setNoteInfo,
+  refreshNotes,
+} = noteSlice.actions;
 
 // Other code such as selectors can use the imported `RootState` type
 export const selectNote = (state: RootState) => state.notes.value;

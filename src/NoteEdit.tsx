@@ -4,11 +4,28 @@ import {SafeAreaView, StyleSheet, View} from 'react-native';
 import Editor from './text-editor/Editor.tsx';
 import WebView from 'react-native-webview';
 import {createRef} from 'react';
-import {useAppSelector} from './redux/hooks.ts';
+import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
+import {refreshNotes, setNoteInfo} from './redux/feature/note/noteSlice.ts';
+import {getDBConnection, saveNote} from './db/db-service.ts';
 
 const NoteEditHeader = () => {
   const navigation = useNavigation();
   const theme = useTheme();
+  const dispatch = useAppDispatch();
+
+  const id = useAppSelector(state => state.notes.id);
+  const currentTitle = useAppSelector(state => state.notes.currentTitle);
+  const currentContent = useAppSelector(state => state.notes.currentContent);
+
+  const updateCurrentNote = async () => {
+    try {
+      const db = await getDBConnection();
+      const note = {id: id, title: currentTitle, content: currentContent};
+      await saveNote(db, note);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <Appbar.Header
@@ -17,7 +34,14 @@ const NoteEditHeader = () => {
         borderBottomWidth: 1,
         borderBottomColor: theme.colors.outline,
       }}>
-      <Appbar.BackAction onPress={() => navigation.goBack()} />
+      <Appbar.BackAction
+        onPress={() => {
+          navigation.goBack();
+          updateCurrentNote();
+          dispatch(setNoteInfo({id: null, title: '', content: ''}));
+          dispatch(refreshNotes());
+        }}
+      />
       <Appbar.Content title="Title" />
     </Appbar.Header>
   );
