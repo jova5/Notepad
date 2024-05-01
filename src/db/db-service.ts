@@ -52,8 +52,8 @@ export const deleteEmptyNotes = async (db: SQLiteDatabase) => {
   await db.executeSql(deleteQuery);
 };
 
-export const deleteNote = async (db: SQLiteDatabase, id: number) => {
-  const deleteQuery = `DELETE from ${tableName} where id = ${id}`;
+export const deleteNotes = async (db: SQLiteDatabase, ids: number[]) => {
+  const deleteQuery = `DELETE from ${tableName} where id IN (${ids})`;
   await db.executeSql(deleteQuery);
 };
 

@@ -9,6 +9,7 @@ import {
   setNoteInfo,
 } from './redux/feature/note/noteSlice.ts';
 import {deleteEmptyNotes, getDBConnection, getNotes} from './db/db-service.ts';
+import DeleteHeader from './DeleteHeader.tsx';
 
 const RenderListItem = ({
   item,
@@ -17,7 +18,7 @@ const RenderListItem = ({
   onPress,
 }: {
   item: any;
-  selectedIds: any[];
+  selectedIds: Set<number>;
   onLongPress: (id: number) => void;
   onPress: (id: number) => void;
 }) => {
@@ -32,7 +33,7 @@ const RenderListItem = ({
       style={[
         styles.item,
         {
-          backgroundColor: selectedIds.includes(item.id)
+          backgroundColor: selectedIds.has(item.id)
             ? theme.colors.elevation.level5
             : theme.colors.elevation.level1,
         },
@@ -51,7 +52,7 @@ const RenderListItem = ({
 
 const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
   const theme = useTheme();
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [notesData, setNotesData] = useState<any[]>([]);
   const navigation = useNavigation();
@@ -79,6 +80,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
 
   useEffect(() => {
     loadDataCallback();
+    setSelectedIds(new Set<number>());
   }, [loadDataCallback]);
 
   useEffect(() => {
@@ -86,6 +88,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
       deleteEmptyDataCallback().then(() => {
         loadDataCallback();
         dispatch(refreshNotes());
+        setSelectedIds(new Set<number>());
       });
     }
   }, [loadDataCallback, refreshingNotes]);
@@ -107,14 +110,22 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
         customSize={76}
         mode={'flat'}
       />
-      <Searchbar
-        placeholder="Search"
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-        onIconPress={() => console.log('icon press')}
-        traileringIcon={'menu'}
-        onTraileringIconPress={() => setOpen(true)}
-      />
+      {selectedIds.size === 0 ? (
+        <Searchbar
+          placeholder="Search"
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          onIconPress={() => console.log('icon press')}
+          traileringIcon={'menu'}
+          onTraileringIconPress={() => setOpen(true)}
+          style={{margin: 10}}
+        />
+      ) : (
+        <DeleteHeader
+          selectedIds={selectedIds}
+          emptySelectedIds={() => setSelectedIds(new Set<number>())}
+        />
+      )}
 
       <ScrollView scrollEnabled={true}>
         <View style={{flexDirection: 'row'}}>
@@ -127,13 +138,16 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
                     item={item}
                     selectedIds={selectedIds}
                     onLongPress={(id: number) =>
-                      setSelectedIds(prev => [...prev, id])
+                      setSelectedIds(prev => new Set([...prev, id]))
                     }
                     onPress={(id: number) => {
-                      if (selectedIds.includes(id)) {
-                        setSelectedIds(prev =>
-                          prev.filter(prevId => prevId !== id),
+                      if (selectedIds.has(id)) {
+                        setSelectedIds(
+                          prev =>
+                            new Set([...prev].filter(prevId => prevId !== id)),
                         );
+                      } else if (selectedIds.size > 0) {
+                        setSelectedIds(prev => new Set([...prev, id]));
                       } else {
                         dispatch(setNoteInfo(item));
                         navigation.navigate('NoteEdit');
@@ -153,13 +167,16 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
                     item={item}
                     selectedIds={selectedIds}
                     onLongPress={(id: number) =>
-                      setSelectedIds(prev => [...prev, id])
+                      setSelectedIds(prev => new Set([...prev, id]))
                     }
                     onPress={(id: number) => {
-                      if (selectedIds.includes(id)) {
-                        setSelectedIds(prev =>
-                          prev.filter(prevId => prevId !== id),
+                      if (selectedIds.has(id)) {
+                        setSelectedIds(
+                          prev =>
+                            new Set([...prev].filter(prevId => prevId !== id)),
                         );
+                      } else if (selectedIds.size > 0) {
+                        setSelectedIds(prev => new Set([...prev, id]));
                       } else {
                         dispatch(setNewTitle(undefined));
                         dispatch(setNoteInfo(item));
@@ -184,7 +201,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flex: 1,
     flexGrow: 1,
-    padding: 10,
   },
   fab: {
     position: 'absolute',

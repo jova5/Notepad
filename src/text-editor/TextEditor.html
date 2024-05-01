@@ -82,10 +82,39 @@
 
 <script>
 
+  const content = document.getElementById("content");
+
   function receiveDataFromReactNative(data) {
     if (data !== null && data !== undefined && data !== "") {
-      content.innerHTML = data;
+
+      if (data.startsWith("<div>") && data.endsWith("</div>")) {
+        content.innerHTML = replaceLinks(data);
+      } else {
+        const transformedContent = data.replace(/<div>(?!<\/div>)/g, "</div><div>");
+        const finalContent = `<div>${transformedContent}`;
+
+        content.innerHTML = replaceLinks(finalContent);
+      }
     }
+  }
+
+  function replaceLinks(text) {
+    // Regular expression to match URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+    // Split the text into segments separated by <div> and </div>
+    const segments = text.split(/(<\/?div>)/);
+
+    // Replace URLs with anchor tags only in segments outside <div> tags
+    const replacedSegments = segments.map(segment => {
+      if (segment.includes("<div>")) {
+        return segment; // Ignore segments containing <div>
+      }
+      return segment.replace(urlRegex, "<a href=\"$1\">$1</a>");
+    });
+
+    // Join the segments back together to form the final text
+    return replacedSegments.join("");
   }
 
   // do not delete this function: formatDoc
@@ -122,8 +151,6 @@
     }
   }
 
-  const content = document.getElementById("content");
-
   content.addEventListener("mouseenter", function() {
     const a = content.querySelectorAll("a");
     a.forEach(item => {
@@ -138,9 +165,9 @@
   });
 
   content.addEventListener("focus", function() {
-    const placeholder = document.getElementById("placeholder")
+    const placeholder = document.getElementById("placeholder");
     placeholder.remove();
-  })
+  });
 
   content.addEventListener("focusout", function() {
     if (content.innerText === "") {
@@ -150,7 +177,7 @@
 
       content.appendChild(placeholder);
     }
-  })
+  });
 
   let typingTimer;
   const doneTypingInterval = 500; // 10 seconds

@@ -4,7 +4,7 @@ import type {RootState} from '../../store.ts';
 
 interface NoteState {
   notepadData: any[];
-  id?: number;
+  id: number | null;
   currentTitle: string;
   currentContent: string;
   newTitle: string;
@@ -14,6 +14,7 @@ interface NoteState {
 
 const initialState: NoteState = {
   notepadData: [],
+  id: null,
   currentTitle: '',
   currentContent: '',
   newTitle: '',
