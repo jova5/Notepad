@@ -74,9 +74,6 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
         source={myHtmlFile}
         javaScriptEnabled={true}
         onLoad={onLoadWebView}
-        // injectedJavaScriptBeforeContentLoaded={
-        //   'receiveDataFromReactNative("test")'
-        // }
         onMessage={handleMessage}
         style={{
           backgroundColor: theme.colors.background,

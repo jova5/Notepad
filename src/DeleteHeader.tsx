@@ -1,5 +1,5 @@
 import {View} from 'react-native';
-import {IconButton, Text} from 'react-native-paper';
+import {IconButton, Text, useTheme} from 'react-native-paper';
 import {useCallback} from 'react';
 import {deleteNotes, getDBConnection} from './db/db-service.ts';
 import {useAppDispatch} from './redux/hooks.ts';
@@ -12,6 +12,7 @@ const DeleteHeader = ({
   selectedIds: Set<number>;
   emptySelectedIds: () => void;
 }) => {
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const deleteSelectedNotes = useCallback(async (ids: Set<number>) => {
     try {
@@ -28,14 +29,26 @@ const DeleteHeader = ({
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
+        backgroundColor: theme.colors.surfaceVariant,
+        height: 60,
       }}>
       <View
-        style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}>
         <IconButton icon={'close'} onPress={emptySelectedIds} />
-        <Text variant="titleLarge">{selectedIds.size}</Text>
+        <Text style={{fontFamily: '400-Roboto'}} variant="titleLarge">
+          {selectedIds.size}
+        </Text>
       </View>
       <View
-        style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}>
         <IconButton
           icon={'delete'}
           onPress={() => {

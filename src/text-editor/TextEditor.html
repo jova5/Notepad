@@ -34,28 +34,28 @@
       flex-direction: column;
     }
 
-    #content {
-      background-color: transparent;
-      display: flex;
-      flex: 1;
-      flex-flow: column;
-      padding: 16px;
-      outline: none;
-      overflow: hidden;
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
+    /*#content {*/
+    /*  background-color: transparent;*/
+    /*  display: flex;*/
+    /*  flex: 1;*/
+    /*  flex-flow: column;*/
+    /*  padding: 16px;*/
+    /*  outline: none;*/
+    /*  overflow: hidden;*/
+    /*  -ms-overflow-style: none;*/
+    /*  scrollbar-width: none;*/
+    /*}*/
 
     #content::-webkit-scrollbar {
       display: none;
     }
 
-    #content {
-      white-space: pre-wrap; /* css-3 */
-      white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
-      white-space: -o-pre-wrap; /* Opera 7 */
-      word-wrap: break-word; /* Internet Explorer 5.5+ */
-    }
+    /*#content {*/
+    /*  white-space: pre-wrap; !* css-3 *!*/
+    /*  white-space: -moz-pre-wrap; !* Mozilla, since 1999 *!*/
+    /*  white-space: -o-pre-wrap; !* Opera 7 *!*/
+    /*  word-wrap: break-word; !* Internet Explorer 5.5+ *!*/
+    /*}*/
   </style>
   <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
   <title>TextEditor</title>
@@ -81,7 +81,6 @@
 </div>
 
 <script>
-
   const content = document.getElementById("content");
 
   function receiveDataFromReactNative(data) {
@@ -291,179 +290,6 @@
     }
   }
 
-  function getNodes(content, numberLineHasContent, number, lastInput) {
-    let nodes = [];
-    let incrementNextNumber = false;
-    for (let i = 0; i < content.childNodes.length; i++) {
-      // console.log(content.childNodes[i].textContent);
-      // TEXT odavde
-      if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
-        // console.log("text");
-        // if (startsWithNumberedListItem(content.childNodes[i].textContent) && incrementNextNumber) {
-        //   console.log("text 1");
-        //   nodes.push(getIncrementedNumberInString(content.childNodes[i].textContent));
-        // } else {
-        // console.log("text 2");
-
-        const div = document.createElement("div");
-        div.textContent = content.childNodes[i].textContent;
-        nodes.push(div);
-        // incrementNextNumber = false;
-        // }
-        // if (content.childNodes.length === 1) {
-        //   console.log("text 3");
-        //
-        //   // const div = document.createElement("div");
-        //   const br = document.createElement("br");
-        //   // div.appendChild(br);
-        //   // nodes.push(br);
-        if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-          // console.log("text 4");
-
-          const div = document.createElement("div");
-          div.textContent = number;
-          nodes.push(div);
-          // const divbr = document.createElement("div");
-          const br = document.createElement("br");
-          // divbr.appendChild(br);
-          // nodes.push(br);
-          // incrementNextNumber = true;
-        }
-        // } else {
-        // console.log("text 5");
-
-        // if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-        //   console.log("text 6");
-        //
-        //   // const divbr = document.createElement("div");
-        //   const br = document.createElement("br");
-        //   // divbr.appendChild(br);
-        //   // nodes.push(br);
-        //
-        //   const div = document.createElement("div");
-        //   div.textContent = number;
-        //   nodes.push(div);
-        //   incrementNextNumber = true;
-        // } else if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-        //   console.log("text 7");
-        //
-        //   nodes.pop();
-        //   incrementNextNumber = false;
-        //   if (content.childNodes[i + 1] === undefined
-        //     || content.childNodes[i + 1].tagName !== "BR") {
-        //     console.log("text 8");
-        //
-        //     // const divbr = document.createElement("div");
-        //     const br = document.createElement("br");
-        //     // divbr.appendChild(br);
-        //     // nodes.push(br);
-        //   }
-        // } else
-        //   if (content.childNodes[i].nodeType === Node.TEXT_NODE
-        //     && content.childNodes[i + 1]
-        //     && content.childNodes[i + 1].tagName === "DIV") {
-        //   console.log("text 9");
-        //
-        //   // const divbr = document.createElement("div");
-        //   // const br = document.createElement("br");
-        //   // divbr.appendChild(br);
-        //   // nodes.push(divbr);
-        //   // incrementNextNumber = false;
-        // }
-        // }
-      }
-
-        // ###############################################################
-      // DIV odavde
-
-      else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
-        if (content.childNodes[i].childNodes.length > 1) {
-          nodes = [
-            ...nodes,
-            ...getNodes(content.childNodes[i], numberLineHasContent, number, lastInput),
-          ];
-        } else if (!numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-          // If numbering does not contain content
-          // then delete current line
-
-          const div = document.createElement("div");
-          div.appendChild(document.createElement("br"));
-          nodes.push(div);
-          incrementNextNumber = false;
-
-        } else {
-          // If numbering does contain content
-
-          if (content.childNodes[i].textContent.length === 0) {
-            const divbr = document.createElement("div");
-            const br = document.createElement("br");
-            divbr.appendChild(br);
-            nodes.push(divbr);
-            incrementNextNumber = false;
-
-          } else {
-            // then copy current line
-
-            if (startsWithNumberedListItem(content.childNodes[i].textContent)
-              && incrementNextNumber) {
-              // if current line is numbering and has numbering after
-              // then increase numbering and copy content
-
-              const div = document.createElement("div");
-              div.textContent = getIncrementedNumberInString(content.childNodes[i].textContent);
-              nodes.push(div);
-            } else {
-              // then copy current line
-
-              const div = document.createElement("div");
-              div.textContent = content.childNodes[i].textContent;
-              nodes.push(div);
-              incrementNextNumber = false;
-            }
-
-            if (numberLineHasContent && content.childNodes[i].textContent === lastInput) {
-              // double check if current line has content
-              // and add new line with incremented number
-              const div = document.createElement("div");
-              div.textContent = number;
-              nodes.push(div);
-              incrementNextNumber = true;
-            }
-          }
-        }
-      }
-    }
-    return nodes;
-  }
-
-  function getNodesSimple(content) {
-    let nodes = [];
-    for (let i = 0; i < content.childNodes.length; i++) {
-      if (content.childNodes[i].nodeType === Node.TEXT_NODE) {
-        nodes.push(content.childNodes[i].textContent);
-        if (content.childNodes[i + 1].textContent.length > 0) {
-          nodes.push(document.createElement("br"));
-        }
-      } else if (content.childNodes[i].nodeType === Node.ELEMENT_NODE) {
-        if (content.childNodes[i].childNodes.length > 1) {
-          nodes = [
-            ...nodes,
-            ...getNodes(content.childNodes[i]),
-          ];
-        } else {
-          if (content.childNodes[i].textContent.length === 0) {
-            nodes.push(document.createElement("br"));
-          } else {
-            nodes.push(content.childNodes[i].textContent);
-            nodes.push(document.createElement("br"));
-          }
-        }
-      }
-    }
-
-    return nodes;
-  }
-
   content.addEventListener("keypress", function(event) {
     if (event.key === "Enter") {
       let lastInput = getCurrentLine();
@@ -553,31 +379,6 @@
       }
     }
   }
-
-  content.addEventListener("paste", function(event) {
-
-    event.preventDefault();
-
-    const currentCursorPosition = getCaretCharacterOffsetWithin(content);
-
-    let splitText = (event.originalEvent || event).clipboardData.getData("text/plain").split("\r");
-    const splitTextLength = splitText.length - 1;
-    const text = splitText.join("");
-
-    document.execCommand("insertText", false, text);
-
-    let nodes = getNodesSimple(content);
-    content.replaceChildren(...nodes);
-
-    let selectedText = window.getSelection();
-    let selectedRange = document.createRange();
-    setCursorPosition(content, selectedRange,
-      currentCursorPosition + text.length - splitTextLength);
-    selectedRange.collapse(true);
-    selectedText.removeAllRanges();
-    selectedText.addRange(selectedRange);
-    content.focus();
-  });
 
   function getCurrentLine() {
     const selection = window.getSelection();

@@ -118,7 +118,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
           onIconPress={() => console.log('icon press')}
           traileringIcon={'menu'}
           onTraileringIconPress={() => setOpen(true)}
-          style={{margin: 10}}
+          style={{marginLeft: 5, marginTop: 5, marginRight: 5}}
         />
       ) : (
         <DeleteHeader
