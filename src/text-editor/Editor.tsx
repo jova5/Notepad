@@ -27,6 +27,7 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
 
   const sendDataToWebView = () => {
     if (ref !== null) {
+      // @ts-ignore
       ref.current.injectJavaScript(
         `receiveDataFromReactNative(${JSON.stringify(content)})`,
       );

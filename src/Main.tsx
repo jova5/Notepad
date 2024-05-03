@@ -43,7 +43,16 @@ const RenderListItem = ({
       <Card.Content>
         <Text variant="titleLarge">{item.title}</Text>
         <Text variant="bodyMedium" numberOfLines={5}>
-          {item.content}
+          {item.content.startsWith('<div>')
+            ? item.content
+                .substring('<div>'.length)
+                .replace(/<div>/g, '\n')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/<[^>]*>/g, '')
+            : item.content
+                .replace(/<div>/g, '\n')
+                .replace(/<[^>]*>/g, '')
+                .replace(/&nbsp;/g, ' ')}
         </Text>
       </Card.Content>
     </Card>
@@ -55,6 +64,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [notesData, setNotesData] = useState<any[]>([]);
+  const [filteredNotes, setFilteredNotes] = useState<any[]>([]);
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const refreshingNotes = useAppSelector(state => state.notes.refreshingNotes);
@@ -64,6 +74,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
       const db = await getDBConnection();
       const storedNotes = await getNotes(db);
       setNotesData(storedNotes);
+      setFilteredNotes(storedNotes);
     } catch (error) {
       console.error(error);
     }
@@ -92,6 +103,19 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
       });
     }
   }, [loadDataCallback, refreshingNotes]);
+
+  useEffect(() => {
+    setFilteredNotes(
+      notesData.filter(
+        item =>
+          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.content
+            .replace(/<[^>]*>/g, '')
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()),
+      ),
+    );
+  }, [searchQuery]);
 
   return (
     <SafeAreaView
@@ -130,7 +154,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
       <ScrollView scrollEnabled={true}>
         <View style={{flexDirection: 'row'}}>
           <View style={{flex: 1}}>
-            {notesData.map((item, index) => {
+            {filteredNotes.map((item, index) => {
               if (index % 2 === 0) {
                 return (
                   <RenderListItem
@@ -159,7 +183,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
             })}
           </View>
           <View style={{flex: 1}}>
-            {notesData.map((item, index) => {
+            {filteredNotes.map((item, index) => {
               if (index % 2 !== 0) {
                 return (
                   <RenderListItem
