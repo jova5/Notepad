@@ -1,5 +1,11 @@
 import {Card, FAB as Fab, Searchbar, Text, useTheme} from 'react-native-paper';
-import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
+import {
+  Animated,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
@@ -68,6 +74,12 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const refreshingNotes = useAppSelector(state => state.notes.refreshingNotes);
+  const scrollY = new Animated.Value(0);
+  const diffClamp = Animated.diffClamp(scrollY, 0, 60);
+  const translateY = diffClamp.interpolate({
+    inputRange: [0, 60],
+    outputRange: [0, -60],
+  });
 
   const loadDataCallback = useCallback(async () => {
     try {
@@ -135,15 +147,30 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
         mode={'flat'}
       />
       {selectedIds.size === 0 ? (
-        <Searchbar
-          placeholder="Search"
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          onIconPress={() => console.log('icon press')}
-          traileringIcon={'menu'}
-          onTraileringIconPress={() => setOpen(true)}
-          style={{marginLeft: 5, marginTop: 5, marginRight: 5}}
-        />
+        <Animated.View
+          style={{
+            transform: [{translateY: translateY}],
+            elevation: 1,
+            zIndex: 1,
+          }}>
+          <Searchbar
+            placeholder="Search"
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            onIconPress={() => console.log('icon press')}
+            traileringIcon={'menu'}
+            onTraileringIconPress={() => setOpen(true)}
+            style={{
+              marginLeft: 5,
+              marginTop: 5,
+              marginRight: 5,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+            }}
+          />
+        </Animated.View>
       ) : (
         <DeleteHeader
           selectedIds={selectedIds}
@@ -151,8 +178,16 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
         />
       )}
 
-      <ScrollView scrollEnabled={true}>
-        <View style={{flexDirection: 'row'}}>
+      <ScrollView
+        scrollEnabled={true}
+        onScroll={e => {
+          scrollY.setValue(e.nativeEvent.contentOffset.y);
+        }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            paddingTop: selectedIds.size > 0 ? 0 : 60,
+          }}>
           <View style={{flex: 1}}>
             {filteredNotes.map((item, index) => {
               if (index % 2 === 0) {
