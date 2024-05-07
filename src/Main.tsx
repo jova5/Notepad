@@ -11,7 +11,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
 import {
   refreshNotes,
-  setNewTitle,
+  setCurrentType,
   setNoteInfo,
 } from './redux/feature/note/noteSlice.ts';
 import {deleteEmptyNotes, getDBConnection, getNotes} from './db/db-service.ts';
@@ -141,6 +141,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
         icon="plus"
         style={styles.fab}
         onPress={() => {
+          dispatch(setCurrentType('NOTE'));
           navigation.navigate('NoteEdit');
         }}
         customSize={76}
@@ -237,7 +238,6 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
                       } else if (selectedIds.size > 0) {
                         setSelectedIds(prev => new Set([...prev, id]));
                       } else {
-                        dispatch(setNewTitle(undefined));
                         dispatch(setNoteInfo(item));
                         navigation.navigate('NoteEdit');
                       }

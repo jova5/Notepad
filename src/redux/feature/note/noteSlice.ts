@@ -1,24 +1,23 @@
 import type {PayloadAction} from '@reduxjs/toolkit';
 import {createSlice} from '@reduxjs/toolkit';
 import type {RootState} from '../../store.ts';
+import {Checklist} from '../../../types/Checklist.ts';
+import uuid from 'react-native-uuid';
 
 interface NoteState {
-  notepadData: any[];
   id: number | null;
   currentTitle: string;
   currentContent: string;
-  newTitle: string;
-  newContent: string;
+  currentType: string;
   refreshingNotes: boolean;
+  openedCheckList?: Checklist[];
 }
 
 const initialState: NoteState = {
-  notepadData: [],
   id: null,
   currentTitle: '',
   currentContent: '',
-  newTitle: '',
-  newContent: '',
+  currentType: '',
   refreshingNotes: false,
 };
 
@@ -29,37 +28,93 @@ export const noteSlice = createSlice({
     setId: (state, action: PayloadAction<number>) => {
       state.id = action.payload;
     },
-    setNewTitle: (state, action: PayloadAction<string>) => {
-      state.newTitle = action.payload;
-    },
-    setNewContent: (state, action: PayloadAction<string>) => {
-      state.newContent = action.payload;
-    },
     setCurrentTitle: (state, action: PayloadAction<string>) => {
       state.currentTitle = action.payload;
     },
     setCurrentContent: (state, action: PayloadAction<string>) => {
       state.currentContent = action.payload;
     },
+    setCurrentType: (state, action: PayloadAction<string>) => {
+      state.currentType = action.payload;
+    },
     setNoteInfo: (state, action: PayloadAction<any>) => {
       state.id = action.payload.id;
       state.currentTitle = action.payload.title;
       state.currentContent = action.payload.content;
+      state.currentType = action.payload.type;
+      if (action.payload.type === 'TODO') {
+        const tempCheckList: Checklist[] = JSON.parse(action.payload.content);
+        state.openedCheckList = tempCheckList.sort((a, b) => a.order - b.order);
+      }
     },
     refreshNotes: state => {
       state.refreshingNotes = !state.refreshingNotes;
+    },
+    updateCheckListContent: (state, action: PayloadAction<any>) => {
+      let tempCheckList = state.openedCheckList;
+      const checkListIndex = tempCheckList!.findIndex(
+        item => item.id === action.payload.id,
+      );
+      tempCheckList![checkListIndex].content = action.payload.content;
+      state.openedCheckList = tempCheckList;
+    },
+    checkCheckList: (state, action: PayloadAction<any>) => {
+      let tempCheckList = state.openedCheckList;
+      const checkListIndex = tempCheckList!.findIndex(
+        item => item.id === action.payload.id,
+      );
+      if (tempCheckList![checkListIndex].checked === 1) {
+        tempCheckList![checkListIndex].checked = 0;
+      } else {
+        tempCheckList![checkListIndex].checked = 1;
+      }
+      state.openedCheckList = tempCheckList;
+    },
+    addNewCheckItem: (state, action: PayloadAction<any>) => {
+      let tempCheckList = state.openedCheckList;
+      tempCheckList!.map(item => {
+        if (item.order >= action.payload.order) {
+          item.order = item.order + 1;
+        }
+      });
+      tempCheckList!.push({
+        id: JSON.stringify(uuid.v4()),
+        checked: 0,
+        content: '',
+        order: action.payload.order,
+      });
+      state.openedCheckList = tempCheckList!.sort((a, b) => a.order - b.order);
+    },
+    removeCheckItem: (state, action: PayloadAction<any>) => {
+      let tempCheckList = state.openedCheckList;
+      const toBeRemovedIndex = tempCheckList!.findIndex(
+        item => item.id === action.payload.id,
+      );
+      const removedOrderNumber = tempCheckList![toBeRemovedIndex].order;
+      tempCheckList = tempCheckList!.filter(
+        item => item.id !== action.payload.id,
+      );
+      tempCheckList.map(item => {
+        if (item.order >= removedOrderNumber) {
+          item.order = item.order - 1;
+        }
+      });
+      state.openedCheckList = tempCheckList;
     },
   },
 });
 
 export const {
   setId,
-  setNewTitle,
-  setNewContent,
   setCurrentTitle,
   setCurrentContent,
+  setCurrentType,
   setNoteInfo,
   refreshNotes,
+  updateCheckListContent,
+  checkCheckList,
+  addNewCheckItem,
+  removeCheckItem,
 } = noteSlice.actions;
 
 // Other code such as selectors can use the imported `RootState` type

@@ -7,6 +7,7 @@ import {createRef} from 'react';
 import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
 import {refreshNotes, setNoteInfo} from './redux/feature/note/noteSlice.ts';
 import {getDBConnection, saveNote} from './db/db-service.ts';
+import CheckList from './CheckList.tsx';
 
 const NoteEditHeader = () => {
   const navigation = useNavigation();
@@ -16,11 +17,17 @@ const NoteEditHeader = () => {
   const id = useAppSelector(state => state.notes.id);
   const currentTitle = useAppSelector(state => state.notes.currentTitle);
   const currentContent = useAppSelector(state => state.notes.currentContent);
+  const currentType = useAppSelector(state => state.notes.currentType);
 
   const updateCurrentNote = async () => {
     try {
       const db = await getDBConnection();
-      const note = {id: id, title: currentTitle, content: currentContent};
+      const note = {
+        id: id,
+        title: currentTitle,
+        content: currentContent,
+        type: currentType,
+      };
       await saveNote(db, note);
     } catch (error) {
       console.error(error);
@@ -50,6 +57,7 @@ const NoteEditHeader = () => {
 const NoteEdit = () => {
   const theme = useTheme();
   const ref = createRef<WebView>();
+  const noteType = useAppSelector(state => state.notes.currentType);
 
   const executeFunctionInWebView = (command: string) => {
     const script = `formatDoc('${command}')`;
@@ -67,7 +75,7 @@ const NoteEdit = () => {
           flex: 1,
           flexDirection: 'column',
         }}>
-        <Editor ref={ref} />
+        {noteType === 'NOTE' ? <Editor ref={ref} /> : <CheckList />}
         <View
           style={{
             display: 'flex',

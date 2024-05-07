@@ -6,8 +6,6 @@ import {
   setCurrentContent,
   setCurrentTitle,
   setId,
-  setNewContent,
-  setNewTitle,
 } from '../redux/feature/note/noteSlice.ts';
 import {getDBConnection, saveNote} from '../db/db-service.ts';
 
@@ -38,7 +36,6 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
   const handleMessage = event => {
     const receivedHtmlContent = event.nativeEvent.data;
 
-    dispatch(setNewContent(receivedHtmlContent));
     dispatch(setCurrentContent(receivedHtmlContent));
     updateCurrentNote();
   };
@@ -46,7 +43,7 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
   const updateCurrentNote = async () => {
     try {
       const db = await getDBConnection();
-      const note = {id: id, title: title, content: content};
+      const note = {id: id, title: title, content: content, type: 'NOTE'};
       const results = await saveNote(db, note);
       dispatch(setId(results[0].insertId));
     } catch (error) {
@@ -64,7 +61,6 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
         contentStyle={{fontSize: 24}}
         defaultValue={title}
         onChangeText={text => {
-          dispatch(setNewTitle(text));
           dispatch(setCurrentTitle(text));
           updateCurrentNote();
         }}
