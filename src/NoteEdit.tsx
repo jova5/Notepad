@@ -18,16 +18,29 @@ const NoteEditHeader = () => {
   const currentTitle = useAppSelector(state => state.notes.currentTitle);
   const currentContent = useAppSelector(state => state.notes.currentContent);
   const currentType = useAppSelector(state => state.notes.currentType);
+  const currentOpenedCheckList = useAppSelector(
+    state => state.notes.openedCheckList,
+  );
 
   const updateCurrentNote = async () => {
     try {
       const db = await getDBConnection();
-      const note = {
-        id: id,
-        title: currentTitle,
-        content: currentContent,
-        type: currentType,
-      };
+      let note;
+      if (currentType === 'NOTE') {
+        note = {
+          id: id,
+          title: currentTitle,
+          content: currentContent,
+          type: currentType,
+        };
+      } else {
+        note = {
+          id: id,
+          title: currentTitle,
+          content: JSON.stringify(currentOpenedCheckList),
+          type: currentType,
+        };
+      }
       await saveNote(db, note);
     } catch (error) {
       console.error(error);

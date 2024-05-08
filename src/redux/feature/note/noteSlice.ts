@@ -2,7 +2,7 @@ import type {PayloadAction} from '@reduxjs/toolkit';
 import {createSlice} from '@reduxjs/toolkit';
 import type {RootState} from '../../store.ts';
 import {Checklist} from '../../../types/Checklist.ts';
-import uuid from 'react-native-uuid';
+import {getDBConnection} from '../../../db/db-service.ts';
 
 interface NoteState {
   id: number | null;
@@ -11,6 +11,7 @@ interface NoteState {
   currentType: string;
   refreshingNotes: boolean;
   openedCheckList?: Checklist[];
+  updateToDo: boolean;
 }
 
 const initialState: NoteState = {
@@ -19,6 +20,7 @@ const initialState: NoteState = {
   currentContent: '',
   currentType: '',
   refreshingNotes: false,
+  updateToDo: false,
 };
 
 export const noteSlice = createSlice({
@@ -78,7 +80,7 @@ export const noteSlice = createSlice({
         }
       });
       tempCheckList!.push({
-        id: JSON.stringify(uuid.v4()),
+        id: action.payload.id,
         checked: 0,
         content: '',
         order: action.payload.order,
@@ -101,6 +103,9 @@ export const noteSlice = createSlice({
       });
       state.openedCheckList = tempCheckList;
     },
+    updateToDoState: state => {
+      state.updateToDo = !state.updateToDo;
+    },
   },
 });
 
@@ -115,6 +120,7 @@ export const {
   checkCheckList,
   addNewCheckItem,
   removeCheckItem,
+  updateToDoState,
 } = noteSlice.actions;
 
 // Other code such as selectors can use the imported `RootState` type
