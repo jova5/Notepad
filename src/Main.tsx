@@ -1,4 +1,11 @@
-import {Card, FAB as Fab, Searchbar, Text, useTheme} from 'react-native-paper';
+import {
+  Card,
+  Checkbox,
+  FAB as Fab,
+  Searchbar,
+  Text,
+  useTheme,
+} from 'react-native-paper';
 import {
   Animated,
   SafeAreaView,
@@ -16,6 +23,7 @@ import {
 } from './redux/feature/note/noteSlice.ts';
 import {deleteEmptyNotes, getDBConnection, getNotes} from './db/db-service.ts';
 import DeleteHeader from './DeleteHeader.tsx';
+import {Checklist} from './types/Checklist.ts';
 
 const RenderListItem = ({
   item,
@@ -29,6 +37,8 @@ const RenderListItem = ({
   onPress: (id: number) => void;
 }) => {
   const theme = useTheme();
+  const tempCheckList: Checklist[] =
+    item.type === 'TODO' ? JSON.parse(item.content) : null;
 
   if (item.empty) {
     return <View style={[styles.item, styles.itemInvisible]} />;
@@ -46,21 +56,54 @@ const RenderListItem = ({
       ]}
       onPress={() => onPress(item.id)}
       onLongPress={() => onLongPress(item.id)}>
-      <Card.Content>
-        <Text variant="titleLarge">{item.title}</Text>
-        <Text variant="bodyMedium" numberOfLines={5}>
-          {item.content.startsWith('<div>')
-            ? item.content
-                .substring('<div>'.length)
-                .replace(/<div>/g, '\n')
-                .replace(/&nbsp;/g, ' ')
-                .replace(/<[^>]*>/g, '')
-            : item.content
-                .replace(/<div>/g, '\n')
-                .replace(/<[^>]*>/g, '')
-                .replace(/&nbsp;/g, ' ')}
-        </Text>
-      </Card.Content>
+      {item.type === 'NOTE' ? (
+        <Card.Content>
+          <Text variant="titleLarge">{item.title}</Text>
+          <Text variant="bodyMedium" numberOfLines={5}>
+            {item.content.startsWith('<div>')
+              ? item.content
+                  .substring('<div>'.length)
+                  .replace(/<div>/g, '\n')
+                  .replace(/&nbsp;/g, ' ')
+                  .replace(/<[^>]*>/g, '')
+              : item.content
+                  .replace(/<div>/g, '\n')
+                  .replace(/<[^>]*>/g, '')
+                  .replace(/&nbsp;/g, ' ')}
+          </Text>
+        </Card.Content>
+      ) : (
+        <Card.Content>
+          <Text variant="titleLarge">{item.title}</Text>
+          {tempCheckList.map((tempItem, index) => {
+            return (
+              index < 5 && (
+                <View
+                  key={tempItem.id}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}>
+                  <Checkbox
+                    status={tempItem.checked === 1 ? 'checked' : 'unchecked'}
+                  />
+                  <Text
+                    style={{
+                      flex: 1,
+                      paddingLeft: 5,
+                      textDecorationLine:
+                        tempItem.checked === 1 ? 'line-through' : 'none',
+                    }}
+                    variant="bodyMedium">
+                    {tempItem.content}
+                  </Text>
+                </View>
+              )
+            );
+          })}
+        </Card.Content>
+      )}
     </Card>
   );
 };
@@ -118,14 +161,23 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
 
   useEffect(() => {
     setFilteredNotes(
-      notesData.filter(
-        item =>
+      notesData.filter(item => {
+        const tempCheckList: Checklist[] =
+          item.type === 'TODO' ? JSON.parse(item.content) : null;
+        const todoContent =
+          tempCheckList !== null
+            ? tempCheckList.map(t => t.content).join(' ')
+            : '';
+        return (
           item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.content
-            .replace(/<[^>]*>/g, '')
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()),
-      ),
+          (item.type === 'NOTE'
+            ? item.content
+                .replace(/<[^>]*>/g, '')
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
+            : todoContent.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+      }),
     );
   }, [searchQuery]);
 
