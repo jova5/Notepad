@@ -8,6 +8,44 @@ import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
 import {refreshNotes, setNoteInfo} from './redux/feature/note/noteSlice.ts';
 import {getDBConnection, saveNote} from './db/db-service.ts';
 import CheckList from './CheckList.tsx';
+import uuid from 'react-native-uuid';
+import {Checklist} from './types/Checklist.ts';
+
+const transformNoteInToDoContent = (noteContent: string) => {
+  if (noteContent === '' || noteContent === null) {
+    return JSON.stringify([
+      {
+        id: JSON.stringify(uuid.v4()),
+        checked: 0,
+        order: 1,
+        content: '',
+      },
+    ]);
+  }
+
+  const divContentRegex = /<div>(.*?)<\/div>/g;
+  let match;
+  const noteContentList = [];
+
+  while ((match = divContentRegex.exec(noteContent)) !== null) {
+    noteContentList.push(match[1]);
+  }
+
+  return JSON.stringify(
+    noteContentList.map((content, index) => ({
+      id: JSON.stringify(uuid.v4()),
+      checked: 0,
+      order: index,
+      content: content,
+    })),
+  );
+};
+
+export const transformToDoInNoteContent = (todoContentList: Checklist[]) => {
+  return todoContentList
+    .map(item => '<div>' + item.content + '</div>')
+    .join('');
+};
 
 const NoteEditHeader = () => {
   const navigation = useNavigation();
@@ -62,7 +100,37 @@ const NoteEditHeader = () => {
           dispatch(refreshNotes());
         }}
       />
-      <Appbar.Content title="Title" />
+      <View
+        style={{
+          display: 'flex',
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+        }}>
+        <IconButton
+          icon={
+            currentType === 'NOTE' ? 'checkbox-marked-outline' : 'note-outline'
+          }
+          mode={'contained-tonal'}
+          containerColor={'transparent'}
+          onPress={() => {
+            const content =
+              currentType === 'NOTE'
+                ? transformNoteInToDoContent(currentContent)
+                : transformToDoInNoteContent(currentOpenedCheckList!);
+            dispatch(
+              setNoteInfo({
+                id: id,
+                title: currentTitle,
+                type: currentType === 'NOTE' ? 'TODO' : 'NOTE',
+                content: content,
+              }),
+            );
+            updateCurrentNote();
+          }}
+        />
+      </View>
     </Appbar.Header>
   );
 };
