@@ -12,6 +12,8 @@ interface NoteState {
   refreshingNotes: boolean;
   openedCheckList?: Checklist[];
   updateToDo: boolean;
+
+  isSwitchingModeDialogShowing: boolean;
 }
 
 const initialState: NoteState = {
@@ -21,6 +23,8 @@ const initialState: NoteState = {
   currentType: '',
   refreshingNotes: false,
   updateToDo: false,
+
+  isSwitchingModeDialogShowing: false,
 };
 
 export const noteSlice = createSlice({
@@ -106,6 +110,12 @@ export const noteSlice = createSlice({
     updateToDoState: state => {
       state.updateToDo = !state.updateToDo;
     },
+    setSwitchingModeDialogShow: state => {
+      state.isSwitchingModeDialogShowing = true;
+    },
+    setSwitchingModeDialogHide: state => {
+      state.isSwitchingModeDialogShowing = false;
+    },
   },
 });
 
@@ -121,6 +131,8 @@ export const {
   addNewCheckItem,
   removeCheckItem,
   updateToDoState,
+  setSwitchingModeDialogShow,
+  setSwitchingModeDialogHide,
 } = noteSlice.actions;
 
 // Other code such as selectors can use the imported `RootState` type

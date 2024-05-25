@@ -1,11 +1,24 @@
-import {Appbar, IconButton, useTheme} from 'react-native-paper';
+import {
+  Appbar,
+  Button,
+  Dialog,
+  IconButton,
+  Portal,
+  Text,
+  useTheme,
+} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView, StyleSheet, View} from 'react-native';
 import Editor from './text-editor/Editor.tsx';
 import WebView from 'react-native-webview';
 import {createRef} from 'react';
 import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
-import {refreshNotes, setNoteInfo} from './redux/feature/note/noteSlice.ts';
+import {
+  refreshNotes,
+  setNoteInfo,
+  setSwitchingModeDialogHide,
+  setSwitchingModeDialogShow,
+} from './redux/feature/note/noteSlice.ts';
 import {getDBConnection, saveNote} from './db/db-service.ts';
 import CheckList from './CheckList.tsx';
 import uuid from 'react-native-uuid';
@@ -115,18 +128,7 @@ const NoteEditHeader = () => {
           mode={'contained-tonal'}
           containerColor={'transparent'}
           onPress={() => {
-            const content =
-              currentType === 'NOTE'
-                ? transformNoteInToDoContent(currentContent)
-                : transformToDoInNoteContent(currentOpenedCheckList!);
-            dispatch(
-              setNoteInfo({
-                id: id,
-                title: currentTitle,
-                type: currentType === 'NOTE' ? 'TODO' : 'NOTE',
-                content: content,
-              }),
-            );
+            dispatch(setSwitchingModeDialogShow());
             updateCurrentNote();
           }}
         />
@@ -139,6 +141,17 @@ const NoteEdit = () => {
   const theme = useTheme();
   const ref = createRef<WebView>();
   const noteType = useAppSelector(state => state.notes.currentType);
+  const dispatch = useAppDispatch();
+  const isSwitchingModeDialogShowing = useAppSelector(
+    state => state.notes.isSwitchingModeDialogShowing,
+  );
+  const id = useAppSelector(state => state.notes.id);
+  const currentTitle = useAppSelector(state => state.notes.currentTitle);
+  const currentContent = useAppSelector(state => state.notes.currentContent);
+  const currentType = useAppSelector(state => state.notes.currentType);
+  const currentOpenedCheckList = useAppSelector(
+    state => state.notes.openedCheckList,
+  );
 
   const executeFunctionInWebView = (command: string) => {
     const script = `formatDoc('${command}')`;
@@ -146,7 +159,6 @@ const NoteEdit = () => {
       ref.current.injectJavaScript(script);
     }
   };
-
   return (
     <>
       <NoteEditHeader />
@@ -200,6 +212,49 @@ const NoteEdit = () => {
           />
         </View>
       </SafeAreaView>
+      <Portal>
+        <Dialog
+          visible={isSwitchingModeDialogShowing}
+          onDismiss={() => dispatch(setSwitchingModeDialogHide())}>
+          <Dialog.Title>Alert</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              {currentType === 'NOTE'
+                ? 'You are about to switch to checklist. Confirm your choice.'
+                : 'You are about to switch to note. Confirm your choice.'}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}>
+            <Button onPress={() => dispatch(setSwitchingModeDialogHide())}>
+              Cancel
+            </Button>
+            <Button
+              onPress={() => {
+                dispatch(setSwitchingModeDialogHide());
+
+                const content =
+                  currentType === 'NOTE'
+                    ? transformNoteInToDoContent(currentContent)
+                    : transformToDoInNoteContent(currentOpenedCheckList!);
+                dispatch(
+                  setNoteInfo({
+                    id: id,
+                    title: currentTitle,
+                    type: currentType === 'NOTE' ? 'TODO' : 'NOTE',
+                    content: content,
+                  }),
+                );
+              }}>
+              Ok
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </>
   );
 };

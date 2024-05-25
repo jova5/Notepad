@@ -44,6 +44,7 @@
       overflow: hidden;
       -ms-overflow-style: none;
       scrollbar-width: none;
+      white-space: pre-wrap;
     }
 
     #content::-webkit-scrollbar {
@@ -86,6 +87,7 @@
   function receiveDataFromReactNative(data) {
     if (data !== null && data !== undefined && data !== "") {
       content.innerHTML = formatContent(data);
+      history = [{ cursorPosition: content.innerHTML.length, htmlState: content.innerHTML }];
     }
   }
 
@@ -333,16 +335,12 @@
   function setCursorStartSelection(content, selectedRange, position) {
     let tempPosition = position;
     for (let i = 0; i < content.childNodes.length; i++) {
-      console.log("start1");
       if (tempPosition <= content.childNodes[i].textContent.length) {
-        console.log("start2");
 
         if (content.childNodes[i].childNodes.length >= 1) {
-          console.log("start3");
 
           setCursorStartSelection(content.childNodes[i], selectedRange, tempPosition);
         } else {
-          console.log("start4: " + tempPosition);
 
           selectedRange.setStart(content.childNodes[i], tempPosition);
         }
@@ -359,17 +357,13 @@
   function setCursorEndSelection(content, selectedRange, position) {
     let tempPosition = position;
     for (let i = 0; i < content.childNodes.length; i++) {
-      console.log("end1");
 
       if (tempPosition <= content.childNodes[i].textContent.length) {
-        console.log("end2");
 
         if (content.childNodes[i].childNodes.length >= 1) {
-          console.log("end3");
 
           setCursorEndSelection(content.childNodes[i], selectedRange, tempPosition);
         } else {
-          console.log("end4: " + tempPosition);
 
           selectedRange.setEnd(content.childNodes[i], tempPosition);
         }
@@ -413,6 +407,13 @@
   }
 
   content.addEventListener("keypress", function(event) {
+
+    // Nzm da li ce ovo uvijek raditi
+    if (content.innerHTML === "\n"
+      + "    \n"
+      + "  "){
+      content.innerHTML = "";
+    }
     if (event.key === "Enter") {
       let lastInput = getCurrentLine();
       if (startsWithNumberedListItem(lastInput)) {
