@@ -159,27 +159,62 @@
       || cmd === "italic"
       || cmd === "strikeThrough") {
 
-      const offsetStart = window.getSelection().getRangeAt(0).startOffset;
-
-      if (globalSelection.startOffset == null) {
-        globalSelection = {
-          startOffset: offsetStart,
-          endOffset: offsetStart + window.getSelection().getRangeAt(0).toString().length,
-        };
-
-      }
+      // const offsetStart = window.getSelection().getRangeAt(0).startOffset;
+      // //
+      // const index = getSelectionStartRow(content);
+      // if (globalSelection.startOffset == null) {
+      //   globalSelection = {
+      //     startOffset: offsetStart,
+      //     endOffset: offsetStart + window.getSelection().getRangeAt(0).toString().length,
+      //   };
+      //
+      // }
 
       document.execCommand(cmd);
 
-      content.innerHTML = formatContent(content.innerHTML);
-      let selectedText = window.getSelection();
-      let selectedRange = document.createRange();
-      setCursorStartSelection(content, selectedRange, globalSelection.startOffset);
-      setCursorEndSelection(content, selectedRange, globalSelection.endOffset);
-      selectedText.removeAllRanges();
-      selectedText.addRange(selectedRange);
-      content.focus();
+      // console.log(wrapTextNodesWithDiv(content.innerHTML));
+      // content.innerHTML = formatContent(content.innerHTML);
+      //
+      // let selectedText = window.getSelection();
+      // let selectedRange = document.createRange();
+      // setCursorStartSelection(content, selectedRange, globalSelection.startOffset, index);
+      // setCursorEndSelection(content, selectedRange, globalSelection.endOffset, index);
+      // selectedText.removeAllRanges();
+      // selectedText.addRange(selectedRange);
+      // content.focus();
     }
+  }
+
+  function getSelectionStartRow(editableDiv) {
+    const selection = window.getSelection();
+    if (selection.rangeCount === 0) {
+      return -1; // No selection
+    }
+
+    const range = selection.getRangeAt(0);
+    const startContainer = range.startContainer;
+
+    // Traverse up to find the row (line) element
+    let node = startContainer;
+    while (node && node !== editableDiv) {
+      if (node.nodeType === Node.ELEMENT_NODE && node.parentNode === editableDiv) {
+        return Array.prototype.indexOf.call(editableDiv.childNodes, node);
+      }
+      node = node.parentNode;
+    }
+
+    // If we don't find an element node, look for the closest text node
+    if (startContainer.nodeType === Node.TEXT_NODE) {
+      node = startContainer.parentNode;
+      while (node && node !== editableDiv) {
+        if (node.parentNode === editableDiv) {
+          return Array.prototype.indexOf.call(editableDiv.childNodes, node);
+        }
+        node = node.parentNode;
+      }
+    }
+
+    return -1; // Couldn't determine the row
   }
 
   content.addEventListener("mousedown", function() {
@@ -277,6 +312,31 @@
     return splitStr.length > 1 && splitStr[1] !== "";
   }
 
+  function wrapTextNodesWithDiv(innerHTML) {
+    // Create a temporary container to hold the content
+    const tempContainer = document.createElement("div");
+    tempContainer.innerHTML = innerHTML;
+
+    // Function to recursively wrap text nodes in a div
+    function wrapTextNodes(element) {
+      const childNodes = Array.from(element.childNodes);
+
+      childNodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim() !== "") {
+          const wrapper = document.createElement("div");
+          wrapper.textContent = node.nodeValue;
+          node.replaceWith(wrapper);
+        }
+      });
+    }
+
+    // Start wrapping from the temporary container
+    wrapTextNodes(tempContainer);
+
+    // Return the modified HTML
+    return tempContainer.innerHTML;
+  }
+
   function getCaretCharacterOffsetWithin(element) {
     let caretOffset = 0;
     let doc = element.ownerDocument || element.document;
@@ -332,14 +392,20 @@
     }
   }
 
-  function setCursorStartSelection(content, selectedRange, position) {
+  function setCursorStartSelection(content, selectedRange, position, index) {
     let tempPosition = position;
-    for (let i = 0; i < content.childNodes.length; i++) {
+    let i;
+    if (index !== null) {
+      i = index;
+    } else {
+      i = 0;
+    }
+    for (; i < content.childNodes.length; i++) {
       if (tempPosition <= content.childNodes[i].textContent.length) {
 
         if (content.childNodes[i].childNodes.length >= 1) {
 
-          setCursorStartSelection(content.childNodes[i], selectedRange, tempPosition);
+          setCursorStartSelection(content.childNodes[i], selectedRange, tempPosition, null);
         } else {
 
           selectedRange.setStart(content.childNodes[i], tempPosition);
@@ -354,15 +420,21 @@
     }
   }
 
-  function setCursorEndSelection(content, selectedRange, position) {
+  function setCursorEndSelection(content, selectedRange, position, index) {
     let tempPosition = position;
-    for (let i = 0; i < content.childNodes.length; i++) {
+    let i;
+    if (index !== null) {
+      i = index;
+    } else {
+      i = 0;
+    }
+    for (; i < content.childNodes.length; i++) {
 
       if (tempPosition <= content.childNodes[i].textContent.length) {
 
         if (content.childNodes[i].childNodes.length >= 1) {
 
-          setCursorEndSelection(content.childNodes[i], selectedRange, tempPosition);
+          setCursorEndSelection(content.childNodes[i], selectedRange, tempPosition, null);
         } else {
 
           selectedRange.setEnd(content.childNodes[i], tempPosition);
@@ -378,8 +450,6 @@
   }
 
   function setCursorSelection(content, selectedRange, startOffset, endOffset) {
-    console.log("sO:" + startOffset);
-    console.log("eO:" + endOffset);
     for (let i = 0; i < content.childNodes.length; i++) {
       console.log(content.childNodes[i].textContent.length);
 
@@ -411,7 +481,7 @@
     // Nzm da li ce ovo uvijek raditi
     if (content.innerHTML === "\n"
       + "    \n"
-      + "  "){
+      + "  ") {
       content.innerHTML = "";
     }
     if (event.key === "Enter") {
@@ -449,6 +519,36 @@
             selectedText.addRange(selectedRange);
             content.focus();
           }
+        }
+      }
+    } else {
+      if (content.childNodes[0].nodeType !== undefined && content.childNodes[0].nodeType === 3) {
+        event.preventDefault()
+        if (content.childNodes[content.childNodes.length - 1].hasChildNodes() &&
+          content.childNodes[content.childNodes.length - 1].childNodes[0].nodeName === 'BR') {
+
+          const temp = document.createElement('div');
+          temp.innerText = event.key;
+          content.childNodes[content.childNodes.length - 1].replaceWith(temp)
+          content.innerHTML = wrapTextNodesWithDiv(content.innerHTML);
+          let selectedText = window.getSelection();
+          let selectedRange = document.createRange();
+          setCursorPosition(content, selectedRange, content.innerText.length-1);
+          selectedRange.collapse(true);
+          selectedText.removeAllRanges();
+          selectedText.addRange(selectedRange);
+          content.focus();
+        }else{
+          content.innerText = content.innerText + event.key;
+          content.innerHTML = wrapTextNodesWithDiv(content.innerHTML);
+
+          let selectedText = window.getSelection();
+          let selectedRange = document.createRange();
+          setCursorPosition(content, selectedRange, content.innerText.length);
+          selectedRange.collapse(true);
+          selectedText.removeAllRanges();
+          selectedText.addRange(selectedRange);
+          content.focus();
         }
       }
     }
