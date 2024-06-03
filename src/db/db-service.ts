@@ -51,7 +51,7 @@ export const saveNote = async (db: SQLiteDatabase, note: any) => {
 export const deleteEmptyNotes = async (db: SQLiteDatabase) => {
   const deleteQuery = `DELETE from ${tableName} where title = "" and (content = ""
     or (content like '%"content":""%'))`;
-  await db.executeSql(deleteQuery);
+  return await db.executeSql(deleteQuery);
 };
 
 export const deleteNotes = async (db: SQLiteDatabase, ids: number[]) => {

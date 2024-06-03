@@ -3,17 +3,21 @@ import {
   Checkbox,
   FAB as Fab,
   Searchbar,
+  Snackbar,
   Text,
   useTheme,
 } from 'react-native-paper';
 import {
   Animated,
+  Appearance,
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  TextInput,
+  useColorScheme,
   View,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {createRef, useCallback, useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
 import {
@@ -110,6 +114,7 @@ const RenderListItem = ({
 
 const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
   const theme = useTheme();
+  const isDarkMode = useColorScheme() === 'dark';
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [notesData, setNotesData] = useState<any[]>([]);
@@ -123,6 +128,7 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
     inputRange: [0, 60],
     outputRange: [0, -60],
   });
+  const [snackBarVisible, setSnackBarVisible] = useState<boolean>(false);
 
   const loadDataCallback = useCallback(async () => {
     try {
@@ -138,7 +144,10 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
   const deleteEmptyDataCallback = useCallback(async () => {
     try {
       const db = await getDBConnection();
-      await deleteEmptyNotes(db);
+      const t = await deleteEmptyNotes(db);
+      if (t[0].rowsAffected >= 1) {
+        setSnackBarVisible(true);
+      }
     } catch (error) {
       console.error(error);
     }
@@ -181,6 +190,8 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
     );
   }, [searchQuery]);
 
+  const ref = createRef<TextInput>();
+
   return (
     <SafeAreaView
       style={[
@@ -207,12 +218,21 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
             zIndex: 1,
           }}>
           <Searchbar
+            ref={ref}
             placeholder="Search"
             onChangeText={setSearchQuery}
             value={searchQuery}
-            onIconPress={() => console.log('icon press')}
-            traileringIcon={'menu'}
-            onTraileringIconPress={() => setOpen(true)}
+            traileringIcon={
+              isDarkMode ? 'white-balance-sunny' : 'moon-waxing-crescent'
+            }
+            // onTraileringIconPress={() => setOpen(true)}
+            onTraileringIconPress={() => {
+              if (isDarkMode) {
+                Appearance.setColorScheme('light');
+              } else {
+                Appearance.setColorScheme('dark');
+              }
+            }}
             style={{
               marginLeft: 5,
               marginTop: 5,
@@ -301,6 +321,13 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
           </View>
         </View>
       </ScrollView>
+      <Snackbar
+        style={{marginBottom: 100}}
+        visible={snackBarVisible}
+        onDismiss={() => setSnackBarVisible(false)}
+        duration={2000}>
+        Empty note discarded.
+      </Snackbar>
     </SafeAreaView>
   );
 };
