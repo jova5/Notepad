@@ -559,7 +559,6 @@
     let addBeforeCurrent = false;
     let childNodeLength = content.childNodes.length;
     for (let i = 0; i < childNodeLength; i++) {
-      // console.log(content.childNodes[i]);
 
       if (content.childNodes[i].textContent === lastInput &&
         !numberingHasContent(content.childNodes[i].textContent)) {
@@ -606,24 +605,42 @@
   function getCurrentLine() {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
-      return null; // No selection or range available
+      return null;
     }
+
     const range = selection.getRangeAt(0);
-    const startNode = range.startContainer;
-    if (startNode.nodeType !== Node.TEXT_NODE) {
-      return null; // Cursor is not positioned within text node
+    let parentBlock = range.startContainer;
+
+    while (parentBlock && parentBlock.nodeType !== Node.ELEMENT_NODE) {
+      parentBlock = parentBlock.parentNode;
     }
-    const text = startNode.textContent;
-    const startIndex = range.startOffset;
-    let lineStartIndex = startIndex;
-    let lineEndIndex = startIndex;
-    while (lineStartIndex > 0 && text[lineStartIndex - 1] !== "\n") {
-      lineStartIndex--;
+
+    function collectText(node) {
+      let text = '';
+      node.childNodes.forEach(child => {
+        if (child.nodeType === Node.TEXT_NODE) {
+          text += child.textContent;
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+          text += collectText(child);
+        }
+      });
+      return text;
     }
-    while (lineEndIndex < text.length && text[lineEndIndex] !== "\n") {
-      lineEndIndex++;
+
+    function findParentDiv(node) {
+      while (node && node.nodeName.toLowerCase() !== 'div') {
+        node = node.parentNode;
+      }
+      return node;
     }
-    return text.substring(lineStartIndex, lineEndIndex);
+
+    const relevantParentDiv = findParentDiv(parentBlock);
+
+    if (!relevantParentDiv) {
+      return null;
+    }
+
+    return collectText(relevantParentDiv);
   }
 
 </script>
