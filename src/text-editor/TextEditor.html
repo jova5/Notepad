@@ -87,7 +87,6 @@
   function receiveDataFromReactNative(data) {
     if (data !== null && data !== undefined && data !== "") {
       content.innerHTML = formatContent(data);
-      history = [{ cursorPosition: content.innerHTML.length, htmlState: content.innerHTML }];
     }
   }
 
@@ -123,65 +122,8 @@
 
   let globalSelection = { startOffset: null, endOffset: null };
 
-  // do not delete this function: formatDoc
   function formatDoc(cmd, value = null) {
-
-    if (cmd === "undo") {
-      if (position > 0) {
-        position -= 1;
-      }
-      content.innerHTML = history[position].htmlState;
-      window.ReactNativeWebView.postMessage(content.innerHTML);
-
-      let selectedText = window.getSelection();
-      let selectedRange = document.createRange();
-      setCursorPosition(content, selectedRange, history[position].cursorPosition);
-      selectedRange.collapse(true);
-      selectedText.removeAllRanges();
-      selectedText.addRange(selectedRange);
-      content.focus();
-    } else if (cmd === "redo") {
-      if ((position < 31) && (history.length - 1 > position)) {
-        position += 1;
-      }
-      content.innerHTML = history[position].htmlState;
-      window.ReactNativeWebView.postMessage(content.innerHTML);
-
-      let selectedText = window.getSelection();
-      let selectedRange = document.createRange();
-      setCursorPosition(content, selectedRange, history[position].cursorPosition);
-      selectedRange.collapse(true);
-      selectedText.removeAllRanges();
-      selectedText.addRange(selectedRange);
-      content.focus();
-    } else if (cmd === "bold"
-      || cmd === "underline"
-      || cmd === "italic"
-      || cmd === "strikeThrough") {
-
-      // const offsetStart = window.getSelection().getRangeAt(0).startOffset;
-      // //
-      // const index = getSelectionStartRow(content);
-      // if (globalSelection.startOffset == null) {
-      //   globalSelection = {
-      //     startOffset: offsetStart,
-      //     endOffset: offsetStart + window.getSelection().getRangeAt(0).toString().length,
-      //   };
-      //
-      // }
-
       document.execCommand(cmd);
-
-      // content.innerHTML = formatContent(content.innerHTML);
-      //
-      // let selectedText = window.getSelection();
-      // let selectedRange = document.createRange();
-      // setCursorStartSelection(content, selectedRange, globalSelection.startOffset, index);
-      // setCursorEndSelection(content, selectedRange, globalSelection.endOffset, index);
-      // selectedText.removeAllRanges();
-      // selectedText.addRange(selectedRange);
-      // content.focus();
-    }
   }
 
   function getSelectionStartRow(editableDiv) {
@@ -253,34 +195,6 @@
       content.appendChild(placeholder);
     }
   });
-
-  let typingTimer;
-  const doneTypingInterval = 500; // 10 seconds
-  let history = [{ cursorPosition: 0, htmlState: "<div></div>" }];
-  let position = 0;
-
-  // Event listener for any input in the contenteditable div
-  content.addEventListener("input", function() {
-
-    clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => {
-      const cursorPosition = getCaretCharacterOffsetWithin(content);
-      const htmlState = content.innerHTML;
-      populateHistory(htmlState, cursorPosition);
-
-      window.ReactNativeWebView.postMessage(htmlState);
-    }, doneTypingInterval);
-  });
-
-  function populateHistory(html, cursorPosition) {
-    if (history.length === 31) {
-      history.shift();
-      history.push({ cursorPosition: cursorPosition, htmlState: html });
-    } else {
-      history.push({ cursorPosition: cursorPosition, htmlState: html });
-      position += 1;
-    }
-  }
 
   function startsWithNumberedListItem(str) {
     const regex = /^\d+\.|\s*\d+\)/;
@@ -391,89 +305,6 @@
     }
   }
 
-  function setCursorStartSelection(content, selectedRange, position, index) {
-    let tempPosition = position;
-    let i;
-    if (index !== null) {
-      i = index;
-    } else {
-      i = 0;
-    }
-    for (; i < content.childNodes.length; i++) {
-      if (tempPosition <= content.childNodes[i].textContent.length) {
-
-        if (content.childNodes[i].childNodes.length >= 1) {
-
-          setCursorStartSelection(content.childNodes[i], selectedRange, tempPosition, null);
-        } else {
-
-          selectedRange.setStart(content.childNodes[i], tempPosition);
-        }
-        break;
-      }
-      // if (content.childNodes[i].textContent.length === 0 && position === 1) {
-      //   selectedRange.setStartBefore(content.childNodes[i]);
-      //   break;
-      // }
-      tempPosition = tempPosition - content.childNodes[i].textContent.length;
-    }
-  }
-
-  function setCursorEndSelection(content, selectedRange, position, index) {
-    let tempPosition = position;
-    let i;
-    if (index !== null) {
-      i = index;
-    } else {
-      i = 0;
-    }
-    for (; i < content.childNodes.length; i++) {
-
-      if (tempPosition <= content.childNodes[i].textContent.length) {
-
-        if (content.childNodes[i].childNodes.length >= 1) {
-
-          setCursorEndSelection(content.childNodes[i], selectedRange, tempPosition, null);
-        } else {
-
-          selectedRange.setEnd(content.childNodes[i], tempPosition);
-        }
-        break;
-      }
-      // if (content.childNodes[i].textContent.length === 0 && position === 1) {
-      //   selectedRange.setStartBefore(content.childNodes[i]);
-      //   break;
-      // }
-      tempPosition = tempPosition - content.childNodes[i].textContent.length;
-    }
-  }
-
-  function setCursorSelection(content, selectedRange, startOffset, endOffset) {
-    for (let i = 0; i < content.childNodes.length; i++) {
-
-      if (startOffset < content.childNodes[i].textContent.length) {
-        if (content.childNodes[i].childNodes.length >= 1) {
-          setCursorSelection(content.childNodes[i], selectedRange, startOffset, endOffset);
-        }
-      }
-      // if (startOffset <= content.childNodes[i].textContent.length) {
-      //   if (content.childNodes[i].childNodes.length >= 1) {
-      //     setCursorSelection(content.childNodes[i], selectedRange, startOffset, endOffset);
-      //   } else {
-      //     selectedRange.setStart(selectedRange.startContainer, startOffset);
-      //     selectedRange.setEnd(selectedRange.endContainer, endOffset);
-      //   }
-      //   break;
-      // }
-      // if (content.childNodes[i].textContent.length === 0 && startOffset === 1) {
-      //   selectedRange.setStartBefore(content.childNodes[i]);
-      //   break;
-      // }
-      // startOffset = startOffset - content.childNodes[i].textContent.length;
-      // endOffset = endOffset - content.childNodes[i].textContent.length;
-    }
-  }
-
   content.addEventListener("keypress", function(event) {
 
     // Nzm da li ce ovo uvijek raditi
@@ -490,15 +321,12 @@
         let listOfContents = content.innerText.split("\n");
         if (isEndOfLine(listOfContents, cursorPosition)) {
           event.preventDefault();
-          let nodes = [];
           let number = "";
           if (numberLineHasContent) {
             number = getIncrementedNumber(lastInput);
           }
           handleNumbering(content, numberLineHasContent, number, lastInput,
             getSelectionStartRow(content));
-          // nodes = getNodes(content, numberLineHasContent, number, lastInput);
-          // content.replaceChildren(...nodes);
           if (numberLineHasContent) {
             let selectedText = window.getSelection();
             let selectedRange = document.createRange();
@@ -576,9 +404,6 @@
         incrementNextNumber = startsWithNumberedListItem(content.childNodes[i + 1].textContent);
       } else if (content.childNodes[i].textContent === lastInput
         && content.childNodes[i + 1] === undefined && rowNumber === i) {
-        // const tempDiv = document.createElement("div");
-        // div.textContent = content.childNodes[i].textContent;
-        // content.childNodes[i] = tempDiv
 
         const div = document.createElement("div");
         div.textContent = number;
@@ -608,6 +433,11 @@
 
     const range = selection.getRangeAt(0);
     let parentBlock = range.startContainer;
+
+    if (parentBlock.id !== undefined
+      && parentBlock.id.toString() === "content") {
+      return "";
+    }
 
     while (parentBlock && parentBlock.nodeType !== Node.ELEMENT_NODE) {
       parentBlock = parentBlock.parentNode;
@@ -640,7 +470,6 @@
 
     return collectText(relevantParentDiv);
   }
-
 </script>
 </body>
 </html>
