@@ -55,6 +55,9 @@ const transformNoteInToDoContent = (noteContent: string) => {
 };
 
 export const transformToDoInNoteContent = (todoContentList: Checklist[]) => {
+  if (todoContentList.length === 1 && todoContentList[0].content === '') {
+    return '';
+  }
   return todoContentList
     .map(item => '<div>' + item.content + '</div>')
     .join('');
@@ -128,8 +131,39 @@ const NoteEditHeader = () => {
           mode={'contained-tonal'}
           containerColor={'transparent'}
           onPress={() => {
-            dispatch(setSwitchingModeDialogShow());
-            updateCurrentNote();
+            if (currentType === 'NOTE' && currentContent !== '') {
+              dispatch(setSwitchingModeDialogShow());
+            } else if (currentType === 'NOTE') {
+              const content = transformNoteInToDoContent(currentContent);
+              dispatch(
+                setNoteInfo({
+                  id: id,
+                  title: currentTitle,
+                  type: 'TODO',
+                  content: content,
+                }),
+              );
+            } else if (
+              (currentType === 'TODO' &&
+                currentOpenedCheckList!.length === 1 &&
+                currentOpenedCheckList![0].content !== '') ||
+              currentOpenedCheckList!.length >= 2
+            ) {
+              dispatch(setSwitchingModeDialogShow());
+            } else {
+              console.log(currentOpenedCheckList);
+              const content = transformToDoInNoteContent(
+                currentOpenedCheckList!,
+              );
+              dispatch(
+                setNoteInfo({
+                  id: id,
+                  title: currentTitle,
+                  type: 'NOTE',
+                  content: content,
+                }),
+              );
+            }
           }}
         />
       </View>
@@ -190,35 +224,39 @@ const NoteEdit = () => {
             mode={'contained'}
             onPress={() => executeFunctionInWebView('redo')}
           />
-          <IconButton
-            icon={'format-bold'}
-            mode={'contained'}
-            onPress={() => executeFunctionInWebView('bold')}
-          />
-          <IconButton
-            icon={'format-underline'}
-            mode={'contained'}
-            onPress={() => executeFunctionInWebView('underline')}
-          />
-          <IconButton
-            icon={'format-italic'}
-            mode={'contained'}
-            onPress={() => executeFunctionInWebView('italic')}
-          />
-          <IconButton
-            icon={'format-strikethrough'}
-            mode={'contained'}
-            onPress={() => executeFunctionInWebView('strikeThrough')}
-          />
+          {noteType === 'NOTE' && (
+            <>
+              <IconButton
+                icon={'format-bold'}
+                mode={'contained'}
+                onPress={() => executeFunctionInWebView('bold')}
+              />
+              <IconButton
+                icon={'format-underline'}
+                mode={'contained'}
+                onPress={() => executeFunctionInWebView('underline')}
+              />
+              <IconButton
+                icon={'format-italic'}
+                mode={'contained'}
+                onPress={() => executeFunctionInWebView('italic')}
+              />
+              <IconButton
+                icon={'format-strikethrough'}
+                mode={'contained'}
+                onPress={() => executeFunctionInWebView('strikeThrough')}
+              />
+            </>
+          )}
         </View>
       </SafeAreaView>
       <Portal>
         <Dialog
           visible={isSwitchingModeDialogShowing}
           onDismiss={() => dispatch(setSwitchingModeDialogHide())}>
-          <Dialog.Title>Alert</Dialog.Title>
+          <Dialog.Title style={{fontFamily: '400-Roboto'}}>Alert</Dialog.Title>
           <Dialog.Content>
-            <Text variant="bodyMedium">
+            <Text variant="bodyLarge" style={{fontFamily: '400-Roboto'}}>
               {currentType === 'NOTE'
                 ? 'You are about to switch to checklist. Confirm your choice.'
                 : 'You are about to switch to note. Confirm your choice.'}
@@ -230,10 +268,13 @@ const NoteEdit = () => {
               flexDirection: 'row',
               justifyContent: 'space-between',
             }}>
-            <Button onPress={() => dispatch(setSwitchingModeDialogHide())}>
+            <Button
+              labelStyle={{fontFamily: '500-Roboto', fontSize: 18}}
+              onPress={() => dispatch(setSwitchingModeDialogHide())}>
               Cancel
             </Button>
             <Button
+              labelStyle={{fontFamily: '500-Roboto', fontSize: 18}}
               onPress={() => {
                 dispatch(setSwitchingModeDialogHide());
 

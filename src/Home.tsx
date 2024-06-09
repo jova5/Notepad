@@ -27,11 +27,11 @@ const Home = () => {
               icon={isDarkMode ? 'white-balance-sunny' : 'moon-waxing-crescent'}
               size={25}
               onPress={() => {
-                if (isDarkMode) {
-                  Appearance.setColorScheme('light');
-                } else {
-                  Appearance.setColorScheme('dark');
-                }
+                // if (isDarkMode) {
+                //   Appearance.setColorScheme('light');
+                // } else {
+                //   Appearance.setColorScheme('dark');
+                // }
               }}
             />
             <PaperDrawer.Item

@@ -29,6 +29,10 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
       ref.current.injectJavaScript(
         `receiveDataFromReactNative(${JSON.stringify(content)})`,
       );
+      // @ts-ignore
+      ref.current.injectJavaScript(
+        `receiveTheme(${JSON.stringify(theme.colors.onBackground)})`,
+      );
     }
   };
 
@@ -58,7 +62,7 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
         underlineStyle={{display: 'none'}}
         outlineStyle={{display: 'none'}}
         placeholder="Title"
-        contentStyle={{fontSize: 24}}
+        contentStyle={{fontSize: 24, fontFamily: '400-Roboto'}}
         defaultValue={title}
         onChangeText={text => {
           dispatch(setCurrentTitle(text));
@@ -69,6 +73,10 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
         ref={ref}
         originWhitelist={['*']}
         source={myHtmlFile}
+        allowFileAccess
+        allowingReadAccessToURL={'file://'}
+        allowUniversalAccessFromFileURLs
+        allowFileAccessFromFileURLs
         javaScriptEnabled={true}
         onLoad={onLoadWebView}
         onMessage={handleMessage}

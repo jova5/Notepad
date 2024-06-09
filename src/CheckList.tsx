@@ -10,6 +10,7 @@ import {
   checkCheckList,
   removeCheckItem,
   setCurrentTitle,
+  setId,
   updateCheckListContent,
   updateToDoState,
 } from './redux/feature/note/noteSlice.ts';
@@ -69,6 +70,7 @@ const RenderItem = ({item}: {item: Checklist}) => {
         underlineStyle={{display: 'none'}}
         outlineStyle={{display: 'none'}}
         contentStyle={{
+          fontFamily: '400-Roboto',
           fontSize: 18,
           paddingLeft: 5,
           textDecorationLine: item.checked === 1 ? 'line-through' : 'none',
@@ -129,7 +131,8 @@ const CheckList = () => {
         content: JSON.stringify(currentOpenedCheckList),
         type: 'TODO',
       };
-      await saveNote(db, note);
+      const results = await saveNote(db, note);
+      dispatch(setId(results[0].insertId));
     } catch (error) {
       console.error(error);
     }

@@ -49,8 +49,14 @@ export const noteSlice = createSlice({
       state.currentContent = action.payload.content;
       state.currentType = action.payload.type;
       if (action.payload.type === 'TODO') {
-        const tempCheckList: Checklist[] = JSON.parse(action.payload.content);
-        state.openedCheckList = tempCheckList.sort((a, b) => a.order - b.order);
+        if (action.payload.content === '') {
+          state.openedCheckList = [];
+        } else {
+          const tempCheckList: Checklist[] = JSON.parse(action.payload.content);
+          state.openedCheckList = tempCheckList.sort(
+            (a, b) => a.order - b.order,
+          );
+        }
       }
     },
     refreshNotes: state => {

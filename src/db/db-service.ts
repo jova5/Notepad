@@ -36,8 +36,7 @@ export const getNotes = async (db: SQLiteDatabase): Promise<any[]> => {
 
     return notes;
   } catch (error) {
-    console.error(error);
-    throw Error('Failed to get notes !!!');
+    return [];
   }
 };
 

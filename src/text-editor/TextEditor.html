@@ -4,10 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    @font-face {
+      font-family: "100-Roboto";
+      src: url("../../assets/fonts/300-Roboto.ttf");
+    }
+
     * {
       margin: 0;
       padding: 0;
       background: transparent;
+      font-family: "100-Roboto";
+      font-size: 18px;
     }
 
     html {
@@ -50,29 +57,23 @@
     #content::-webkit-scrollbar {
       display: none;
     }
-
-    /*#content {*/
-    /*  white-space: pre-wrap; !* css-3 *!*/
-    /*  white-space: -moz-pre-wrap; !* Mozilla, since 1999 *!*/
-    /*  white-space: -o-pre-wrap; !* Opera 7 *!*/
-    /*  word-wrap: break-word; !* Internet Explorer 5.5+ *!*/
-    /*}*/
   </style>
   <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
   <title>TextEditor</title>
 </head>
 <body>
 
-<div class="toolbar">
-  <div class="btn-toolbar">
-    <button onclick="formatDoc('undo')"><i class='bx bx-undo'></i></button>
-    <button onclick="formatDoc('redo')"><i class='bx bx-redo'></i></button>
-    <button onclick="formatDoc('bold')"><i class='bx bx-bold'></i></button>
-    <button onclick="formatDoc('underline')"><i class='bx bx-underline'></i></button>
-    <button onclick="formatDoc('italic')"><i class='bx bx-italic'></i></button>
-    <button onclick="formatDoc('strikeThrough')"><i class='bx bx-strikethrough'></i></button>
-  </div>
-</div>
+<!--ZAKOMENTARISANO U SLUCAJU DA SE BUDE TREBALO TESTIRATI-->
+<!--<div class="toolbar">-->
+<!--  <div class="btn-toolbar">-->
+<!--    <button onclick="formatDoc('undo')"><i class='bx bx-undo'></i></button>-->
+<!--    <button onclick="formatDoc('redo')"><i class='bx bx-redo'></i></button>-->
+<!--    <button onclick="formatDoc('bold')"><i class='bx bx-bold'></i></button>-->
+<!--    <button onclick="formatDoc('underline')"><i class='bx bx-underline'></i></button>-->
+<!--    <button onclick="formatDoc('italic')"><i class='bx bx-italic'></i></button>-->
+<!--    <button onclick="formatDoc('strikeThrough')"><i class='bx bx-strikethrough'></i></button>-->
+<!--  </div>-->
+<!--</div>-->
 
 
 <div class="container">
@@ -88,6 +89,10 @@
     if (data !== null && data !== undefined && data !== "") {
       content.innerHTML = formatContent(data);
     }
+  }
+
+  function receiveTheme(data) {
+    content.style.color = data;
   }
 
   function formatContent(data) {
@@ -122,11 +127,11 @@
 
   let globalSelection = { startOffset: null, endOffset: null };
 
-  function formatDoc(cmd, value = null) {
+  function formatDoc(cmd) {
       document.execCommand(cmd);
   }
 
-  function getSelectionStartRow(editableDiv) {
+  function getCursorRow(editableDiv) {
     const selection = window.getSelection();
     if (selection.rangeCount === 0) {
       return -1; // No selection
@@ -314,7 +319,7 @@
       content.innerHTML = "";
     }
     if (event.key === "Enter") {
-      let lastInput = getCurrentLine();
+      let lastInput = getTextOnCurrentLine();
       if (startsWithNumberedListItem(lastInput)) {
         const numberLineHasContent = numberingHasContent(lastInput);
         const cursorPosition = getCaretCharacterOffsetWithin(content);
@@ -326,7 +331,7 @@
             number = getIncrementedNumber(lastInput);
           }
           handleNumbering(content, numberLineHasContent, number, lastInput,
-            getSelectionStartRow(content));
+            getCursorRow(content));
           if (numberLineHasContent) {
             let selectedText = window.getSelection();
             let selectedRange = document.createRange();
@@ -425,7 +430,7 @@
     }
   }
 
-  function getCurrentLine() {
+  function getTextOnCurrentLine() {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
       return null;
@@ -470,6 +475,18 @@
 
     return collectText(relevantParentDiv);
   }
+
+  let typingTimer;
+  const doneTypingInterval = 500; // 10 seconds
+
+  // Event listener for any input in the contenteditable div
+  content.addEventListener("input", function() {
+    clearTimeout(typingTimer);
+
+    typingTimer = setTimeout(() => {
+      window.ReactNativeWebView.postMessage(content.innerHTML);
+    }, doneTypingInterval);
+  });
 </script>
 </body>
 </html>

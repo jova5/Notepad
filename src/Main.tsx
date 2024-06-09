@@ -62,8 +62,15 @@ const RenderListItem = ({
       onLongPress={() => onLongPress(item.id)}>
       {item.type === 'NOTE' ? (
         <Card.Content>
-          <Text variant="titleLarge">{item.title}</Text>
-          <Text variant="bodyMedium" numberOfLines={5}>
+          <Text
+            variant="titleLarge"
+            style={{fontFamily: '400-Roboto', fontSize: 23}}>
+            {item.title}
+          </Text>
+          <Text
+            variant="bodyMedium"
+            style={{fontFamily: '300-Roboto', fontSize: 17}}
+            numberOfLines={5}>
             {item.content.startsWith('<div>')
               ? item.content
                   .substring('<div>'.length)
@@ -78,7 +85,11 @@ const RenderListItem = ({
         </Card.Content>
       ) : (
         <Card.Content>
-          <Text variant="titleLarge">{item.title}</Text>
+          <Text
+            variant="titleLarge"
+            style={{fontFamily: '400-Roboto', fontSize: 23}}>
+            {item.title}
+          </Text>
           {tempCheckList.map((tempItem, index) => {
             return (
               index < 5 && (
@@ -96,6 +107,8 @@ const RenderListItem = ({
                     style={{
                       flex: 1,
                       paddingLeft: 5,
+                      fontFamily: '300-Roboto',
+                      fontSize: 17,
                       textDecorationLine:
                         tempItem.checked === 1 ? 'line-through' : 'none',
                     }}
@@ -144,8 +157,8 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
   const deleteEmptyDataCallback = useCallback(async () => {
     try {
       const db = await getDBConnection();
-      const t = await deleteEmptyNotes(db);
-      if (t[0].rowsAffected >= 1) {
+      const resultSets = await deleteEmptyNotes(db);
+      if (resultSets[0].rowsAffected >= 1) {
         setSnackBarVisible(true);
       }
     } catch (error) {
@@ -232,6 +245,10 @@ const Main = ({setOpen}: {setOpen: (prev: boolean) => void}) => {
               } else {
                 Appearance.setColorScheme('dark');
               }
+            }}
+            inputStyle={{
+              fontFamily: '300-Roboto',
+              fontSize: 17,
             }}
             style={{
               marginLeft: 5,
