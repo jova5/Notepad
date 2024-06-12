@@ -14,10 +14,13 @@ import WebView from 'react-native-webview';
 import {createRef} from 'react';
 import {useAppDispatch, useAppSelector} from './redux/hooks.ts';
 import {
+  redoCheckList,
   refreshNotes,
+  resetCheckListHistory,
   setNoteInfo,
   setSwitchingModeDialogHide,
   setSwitchingModeDialogShow,
+  undoCheckList,
 } from './redux/feature/note/noteSlice.ts';
 import {getDBConnection, saveNote} from './db/db-service.ts';
 import CheckList from './CheckList.tsx';
@@ -114,6 +117,7 @@ const NoteEditHeader = () => {
           updateCurrentNote();
           dispatch(setNoteInfo({id: null, title: '', content: ''}));
           dispatch(refreshNotes());
+          dispatch(resetCheckListHistory());
         }}
       />
       <View
@@ -188,11 +192,18 @@ const NoteEdit = () => {
   );
 
   const executeFunctionInWebView = (command: string) => {
-    const script = `formatDoc('${command}')`;
-    if (ref.current) {
-      ref.current.injectJavaScript(script);
+    if (currentType === 'NOTE') {
+      const script = `formatDoc('${command}')`;
+      if (ref.current) {
+        ref.current.injectJavaScript(script);
+      }
+    } else if (command === 'undo') {
+      dispatch(undoCheckList());
+    } else if (command === 'redo') {
+      dispatch(redoCheckList());
     }
   };
+
   return (
     <>
       <NoteEditHeader />

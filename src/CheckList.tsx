@@ -6,6 +6,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import {
+  addCheckListToHistory,
   addNewCheckItem,
   checkCheckList,
   removeCheckItem,
@@ -22,10 +23,15 @@ import {getDBConnection, saveNote} from './db/db-service.ts';
 let lastToDoId = null;
 let lastAction = null;
 let lastOrder = null;
+let typingTimer: string | number | NodeJS.Timeout | undefined;
 
 const RenderItem = ({item}: {item: Checklist}) => {
   const dispatch = useAppDispatch();
   const ref = createRef();
+  const currentOpenedCheckList = useAppSelector(
+    state => state.notes.openedCheckList,
+  );
+  const doneTypingInterval = 1000;
 
   setTimeout(() => {
     if (
@@ -77,11 +83,20 @@ const RenderItem = ({item}: {item: Checklist}) => {
         }}
         value={item.content}
         onKeyPress={event => {
-          if (event.nativeEvent.key === 'Backspace' && item.content === '') {
+          if (
+            event.nativeEvent.key === 'Backspace' &&
+            item.content === '' &&
+            currentOpenedCheckList!.length > 1
+          ) {
             lastOrder = item.order === 1 ? 1 : item.order - 1;
             lastAction = 'REMOVE_TODO';
             dispatch(removeCheckItem({id: item.id}));
             dispatch(updateToDoState());
+            dispatch(
+              addCheckListToHistory({
+                content: JSON.stringify(currentOpenedCheckList),
+              }),
+            );
           }
         }}
         onSubmitEditing={() => {
@@ -95,11 +110,26 @@ const RenderItem = ({item}: {item: Checklist}) => {
             }),
           );
           dispatch(updateToDoState());
+          dispatch(
+            addCheckListToHistory({
+              content: JSON.stringify(currentOpenedCheckList),
+            }),
+          );
         }}
         blurOnSubmit={false}
         onChangeText={text => {
           dispatch(updateCheckListContent({id: item.id, content: text}));
           dispatch(updateToDoState());
+
+          clearTimeout(typingTimer);
+
+          typingTimer = setTimeout(() => {
+            dispatch(
+              addCheckListToHistory({
+                content: JSON.stringify(currentOpenedCheckList),
+              }),
+            );
+          }, doneTypingInterval);
         }}
       />
     </View>
@@ -110,14 +140,14 @@ const CheckList = () => {
   const theme = useTheme();
   const title = useAppSelector(state => state.notes.currentTitle);
   const dispatch = useAppDispatch();
-  const checkList: Checklist[] = useAppSelector(
-    state => state.notes.openedCheckList,
-  );
+  // const checkList: Checklist[] = useAppSelector(
+  //   state => state.notes.openedCheckList,
+  // );
 
   const id = useAppSelector(state => state.notes.id);
   const currentTitle = useAppSelector(state => state.notes.currentTitle);
   const updateToDo = useAppSelector(state => state.notes.updateToDo);
-  const currentOpenedCheckList = useAppSelector(
+  const currentOpenedCheckList: Checklist[] = useAppSelector(
     state => state.notes.openedCheckList,
   );
 
@@ -165,7 +195,7 @@ const CheckList = () => {
           updateCurrentToDo();
         }}
       />
-      {checkList.map(item => (
+      {currentOpenedCheckList.map(item => (
         <RenderItem key={item.id} item={item} />
       ))}
     </ScrollView>
