@@ -6,7 +6,8 @@
   <style>
     @font-face {
       font-family: "100-Roboto";
-      src: url("../../assets/fonts/300-Roboto.ttf");
+      /*src: url("../fonts/300-Roboto.ttf");*/
+      src: url("file:///android_asset/fonts/300-Roboto.ttf");
     }
 
     * {
@@ -52,13 +53,16 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
       white-space: pre-wrap;
+      white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
+      white-space: -o-pre-wrap; /* Opera 7 */
+      word-wrap: break-word; /* Internet Explorer 5.5+ */
     }
 
     #content::-webkit-scrollbar {
       display: none;
     }
   </style>
-  <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
+<!--  <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>-->
   <title>TextEditor</title>
 </head>
 <body>
@@ -128,7 +132,7 @@
   let globalSelection = { startOffset: null, endOffset: null };
 
   function formatDoc(cmd) {
-      document.execCommand(cmd);
+    document.execCommand(cmd);
   }
 
   function getCursorRow(editableDiv) {

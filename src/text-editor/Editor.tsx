@@ -8,8 +8,9 @@ import {
   setId,
 } from '../redux/feature/note/noteSlice.ts';
 import {getDBConnection, saveNote} from '../db/db-service.ts';
+import {Platform} from 'react-native';
 
-const myHtmlFile = require('./TextEditor.html');
+const myHtmlFile = require('../assets/html/TextEditor.html');
 
 const Editor = forwardRef((props, ref: Ref<WebView>) => {
   const theme = useTheme();
@@ -72,13 +73,18 @@ const Editor = forwardRef((props, ref: Ref<WebView>) => {
       <WebView
         ref={ref}
         originWhitelist={['*']}
-        source={myHtmlFile}
+        source={
+          Platform.OS === 'ios'
+            ? require('../../src/assets/html/TextEditor.html')
+            : {uri: 'file:///android_asset/html/TextEditor.html'}
+        }
         allowFileAccess
         allowingReadAccessToURL={'file://'}
         allowUniversalAccessFromFileURLs
         allowFileAccessFromFileURLs
         javaScriptEnabled={true}
         onLoad={onLoadWebView}
+        domStorageEnabled
         onMessage={handleMessage}
         style={{
           backgroundColor: theme.colors.background,

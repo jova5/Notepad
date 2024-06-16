@@ -101,6 +101,14 @@ android {
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
+//        applicationVariants.all {
+//            variant ->
+//                if (variant.buildType.name === "release" || variant.buildType.name === "debug") {
+//                    variant.mergeAssetsProvider.get().doLast {
+//                        copy { from "../../src/assets/html" into "./src/main/assets/" }
+//                    }
+//                }
+//        }
     }
 }
 
@@ -113,6 +121,24 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+task copyReactNativeAssets(type: Copy) {
+    from '../../src/assets' // Adjust this path to your assets directory
+    into 'src/main/assets' // Adjust this path if your assets directory is different
+}
+
+// Ensure the task runs before 'mergeAssets' task
+preBuild.dependsOn copyReactNativeAssets
+
+// Ensure tasks run correctly with react-native build tasks
+afterEvaluate {
+    if (project.hasProperty("react")) {
+        def react = project.extensions.getByName("react")
+        if (react.hasProperty("bundleDebugJsAndAssets")) {
+            copyReactNativeAssets.dependsOn react.bundleDebugJsAndAssets
+        }
     }
 }
 
